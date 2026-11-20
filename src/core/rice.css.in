@@ -1,0 +1,614 @@
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+/* rice-gtk4: the GTK 4 stylesheet template. Colors are @define-color names; the shape
+ * numbers are TOKEN placeholders in braces filled in by rice-gtk4-css. Selectors follow the GTK 4 CSS nodes. */
+
+/* Base ------------------------------------------------------------------------- */
+* {
+  outline-style: none;
+  outline-width: 0;
+  box-shadow: none;
+  background-image: none;
+  border-image: none;
+  text-shadow: none;
+  caret-color: @text;
+  color: @text;
+  transition: {TRANSITION};
+}
+/* State changes are colour only, and immediate while pressed or disabled. */
+*:active, *:disabled { transition: none; }
+*:disabled { color: @disabled_text; }
+selection, selection:focus, selection:backdrop, label selection, label:selected, *:selected, .view:selected, textview text selection, entry selection {
+  background-color: @container;
+  color: @container_text;
+}
+.background { background-color: @window; color: @text; }
+window, dialog, messagedialog, .csd { background-color: @window; color: @text; }
+window.csd, window decoration { box-shadow: none; margin: 0; border: {BORDER}px solid @border; border-radius: {R_WINDOW}; }
+.view, iconview, textview text, treeview.view {
+  background-color: @base; color: @text;
+}
+.dim-label, label.dim-label { color: @muted; }
+.error, label.error { color: @negative; }
+.warning, label.warning { color: @warning; }
+.success, label.success { color: @positive; }
+separator { background-color: @border_rule; min-width: 1px; min-height: 1px; opacity: 0.7; }
+frame > border, .frame { border: {BORDER}px solid @border_subtle; border-radius: {R_FRAME}; }
+scrolledwindow viewport.frame, scrolledwindow.frame { border: {BORDER}px solid @border_subtle; }
+link, .link, *:link, label link, label link:link, label link:hover, button.link label { color: @accent; }
+link:visited, *:visited, label link:visited { color: @visited; }
+
+/* Buttons ---------------------------------------------------------------------- */
+button, .button {
+  min-height: {HEIGHT_INNER}px;
+  min-width: 0;
+  padding: 0 {PADDING}px;
+  background-image: none;
+  background-color: @button;
+  color: @text;
+  border: {BORDER}px solid @border;
+  border-radius: {R_BUTTON};
+}
+button:hover { background-color: @button_hover; border-color: @border_hover; }
+button:active { background-color: @button_pressed; }
+button:checked { background-color: @container; color: @container_text; border-color: @selection_border; }
+button:checked:hover { background-color: @container_hover; }
+/* A disabled button keeps a visible, dimmed boundary (disabled_border), not one equal to its fill: beside enabled bordered
+ * buttons a borderless disabled one looks missing. */
+button:disabled { background-color: @disabled_fill; color: @disabled_text; border-color: @disabled_border; }
+button.flat, .flat button, toolbar button, .toolbar button {
+  background-color: transparent; border-color: transparent; }
+button.flat:hover, toolbar button:hover, .toolbar button:hover, headerbar button:hover { background-color: @button_hover; }
+button.flat:active, button.flat:checked, toolbar button:checked, .toolbar button:active, .toolbar button:checked { background-color: @container; color: @container_text; }
+button.suggested-action, .suggested-action {
+  background-color: @primary; color: @primary_text; border-color: @primary; }
+button.suggested-action:hover { background-color: @primary_hover; }
+button.suggested-action:active { background-color: @primary_pressed; }
+button.destructive-action { background-color: @negative; color: @negative_text; border-color: @negative; }
+button.destructive-action:hover { background-color: @negative_hover; }
+/* Icon-only buttons are square: width = height, no side padding. A button with a label keeps
+ * its side padding; the icon and the label are one half-spacing apart. */
+button.image-button:not(.text-button) { min-width: {HEIGHT_INNER}px; padding: 0; }
+button > box, button.text-button > box { border-spacing: {SPACING_HALF}px; }
+button.circular, button.image-button.circular { border-radius: {R_BUTTON}; min-width: {HEIGHT_INNER}px; padding: 0; }
+button.text-button { padding: 0 {PADDING}px; }
+/* Toolbar text buttons are flat, so their width is the only separation from a neighbour: 1.5 x the padding. */
+.toolbar button.text-button, .inline-toolbar button.text-button { padding: 0 {MENU_PAD}px; }
+/* Joined controls (.linked, stack switchers): the items touch, inner corners are square and the outer corners
+ * keep the family radius. Each item owns its leading border (left, or top when vertical) and the item before it
+ * drops its trailing one, so the seam is one line of the follower's border. GTK CSS has no :has() (it knows sibling
+ * combinators only), so the follower cannot be asked about its leader; instead the follower takes
+ * the leader's state colour with a sibling rule: the seam after a checked or hovered button is that button's own
+ * border colour. A checked item then shows all four sides of its outline wherever it sits. Items keep their own
+ * fill; nothing is pulled together with negative margins. A stack switcher is a .linked box that paints
+ * nothing and has no padding of its own, so no outer outline surrounds its buttons. */
+.linked:not(.vertical), stackswitcher:not(.vertical), .linked.vertical, stackswitcher.vertical { border-spacing: 0; }
+stackswitcher { background: none; padding: 0; border-radius: 0; }
+.linked:not(.vertical) > button:not(:first-child), .linked:not(.vertical) > entry:not(:first-child),
+.linked:not(.vertical) > spinbutton:not(:first-child), .linked:not(.vertical) > menubutton:not(:first-child) > button {
+  border-top-left-radius: 0; border-bottom-left-radius: 0; border-left-width: {BORDER}px; }
+.linked:not(.vertical) > button:not(:last-child), .linked:not(.vertical) > entry:not(:last-child),
+.linked:not(.vertical) > spinbutton:not(:last-child), .linked:not(.vertical) > menubutton:not(:last-child) > button {
+  border-top-right-radius: 0; border-bottom-right-radius: 0; border-right-width: 0; }
+.linked:not(.vertical) > button:checked:not(:disabled) + button, .linked:not(.vertical) > button:checked:not(:disabled) + entry,
+.linked:not(.vertical) > button:checked:not(:disabled) + spinbutton, .linked:not(.vertical) > button:checked:not(:disabled) + menubutton > button {
+  border-left-color: @selection_border; }
+.linked:not(.vertical) > button:hover + button:not(:checked), .linked:not(.vertical) > button:hover + entry,
+.linked:not(.vertical) > button:hover + spinbutton, .linked:not(.vertical) > button:hover + menubutton > button {
+  border-left-color: @border_hover; }
+.linked.vertical > button:not(:first-child), .linked.vertical > entry:not(:first-child),
+.linked.vertical > spinbutton:not(:first-child) {
+  border-top-left-radius: 0; border-top-right-radius: 0; border-top-width: {BORDER}px; }
+.linked.vertical > button:not(:last-child), .linked.vertical > entry:not(:last-child),
+.linked.vertical > spinbutton:not(:last-child) {
+  border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom-width: 0; }
+.linked.vertical > button:checked:not(:disabled) + button, .linked.vertical > button:checked:not(:disabled) + entry,
+.linked.vertical > button:checked:not(:disabled) + spinbutton { border-top-color: @selection_border; }
+.linked.vertical > button:hover + button:not(:checked), .linked.vertical > button:hover + entry,
+.linked.vertical > button:hover + spinbutton { border-top-color: @border_hover; }
+/* A disabled item is dim on all four sides and never lends its side to a neighbour. The seam is the follower's leading
+ * border, so beside a disabled item it would show the neighbour's bright (or checked) colour as that item's own
+ * side, and a disabled follower would show the leader's colour as its own. Each disabled button therefore draws the
+ * sides it does not own as an inset line (inside its box, no size change), and the seam line keeps being the
+ * outline of the enabled item it touches: bright on an enabled follower, the leader's outline colour on a disabled
+ * follower, dim when both are disabled. */
+.linked:not(.vertical) > button:disabled:not(:first-child) { border-left-color: @border; box-shadow: inset {BORDER}px 0 0 @disabled_border; }
+.linked:not(.vertical) > button:disabled:not(:last-child) { box-shadow: inset -{BORDER}px 0 0 @disabled_border; }
+.linked:not(.vertical) > button:disabled:not(:first-child):not(:last-child) {
+  box-shadow: inset {BORDER}px 0 0 @disabled_border, inset -{BORDER}px 0 0 @disabled_border; }
+.linked:not(.vertical) > button:disabled + button:disabled { border-left-color: @disabled_border; }
+.linked.vertical > button:disabled:not(:first-child) { border-top-color: @border; box-shadow: inset 0 {BORDER}px 0 @disabled_border; }
+.linked.vertical > button:disabled:not(:last-child) { box-shadow: inset 0 -{BORDER}px 0 @disabled_border; }
+.linked.vertical > button:disabled:not(:first-child):not(:last-child) {
+  box-shadow: inset 0 {BORDER}px 0 @disabled_border, inset 0 -{BORDER}px 0 @disabled_border; }
+.linked.vertical > button:disabled + button:disabled { border-top-color: @disabled_border; }
+/* An icon-only item that drops its trailing border is one border narrower than a lone icon button: SEAM_SIDE (inner
+ * height + one border) keeps every item of the group one control height square. */
+.linked:not(.vertical) > button.image-button:not(.text-button):not(:last-child) { min-width: {SEAM_SIDE}px; }
+.linked.vertical > button.image-button:not(.text-button):not(:last-child) { min-height: {SEAM_SIDE}px; }
+/* Needs-attention: the stack switcher button of a page asking for attention draws a warning boundary and text. */
+stackswitcher button.needs-attention { border-color: @warning; color: @warning; }
+button.link, button.link:hover { background-color: transparent; border-color: @border_resting_link; color: @accent; }
+menubutton > button, combobox button { padding: 0 {PADDING}px; }
+combobox arrow, menubutton arrow { min-width: 16px; min-height: 16px; }
+
+/* Text entry ------------------------------------------------------------------- */
+entry, spinbutton {
+  min-height: {HEIGHT_INNER}px;
+  padding: 0 {PADDING_WIDE}px;
+  background-color: @base;
+  color: @text;
+  border: {BORDER}px solid @border;
+  border-radius: {R_INPUT};
+}
+entry:disabled, spinbutton:disabled { background-color: @disabled_base; color: @disabled_text; border-color: @disabled_border; }
+entry.error { border-color: @negative; }
+entry.warning { border-color: @warning; }
+entry image { color: @muted; }
+entry progress { background-color: @primary; min-height: 2px; }
+entry selection { background-color: @selection; color: @selection_text; }
+/* GTK 4 spinbutton = text + two buttons in a row. The box has no padding and the same height as an entry: the buttons
+ * are squares inset by half a spacing on every side (SPIN_BTN = inner height - 2 * half spacing), so the whole is one control
+ * height, and the text takes the entry's side padding. Nothing here is a fixed pixel count. */
+spinbutton { padding: 0; border-spacing: 0; }
+spinbutton > text { min-width: {HEIGHT}px; padding: 0 0 0 {PADDING_WIDE}px; margin: 0; border: none; border-radius: 0; background: none; box-shadow: none; }
+spinbutton:not(.vertical) > button, spinbutton:not(.vertical) > button.image-button:not(.text-button) { min-width: {SPIN_BTN}px; min-height: {SPIN_BTN}px; padding: 0; margin: {SPACING_HALF}px 0; border: none; border-radius: {R_BUTTON}; background-color: transparent; box-shadow: none; }
+spinbutton:not(.vertical) > button:dir(ltr) { margin-right: {SPACING_HALF}px; }
+spinbutton:not(.vertical) > button:dir(rtl) { margin-left: {SPACING_HALF}px; }
+spinbutton.vertical > text { min-width: {HEIGHT_INNER}px; padding: 0; }
+spinbutton.vertical > button { min-height: {SPIN_BTN}px; min-width: {HEIGHT_INNER}px; padding: 0; margin: 0; border: none; border-radius: 0; background-color: transparent; }
+spinbutton > button:hover { background-color: @button_hover; }
+spinbutton > button:active { background-color: @container; color: @container_text; }
+
+/* Check, radio, switch --------------------------------------------------------- */
+/* A check or radio draws as a builtin icon whose content box is -gtk-icon-size, at least min-width and
+ * min-height. Measured: with those unset the box stays 20 px, so they are zeroed and the size is the icon size. The box
+ * is that size plus padding and border. */
+check, radio, .check, .radio {
+  -gtk-icon-size: {INDICATOR}px; min-width: 0; min-height: 0;
+  background-image: none;
+  background-color: @base;
+  border: {BORDER}px solid @border;
+  color: @primary_text;
+  margin: 0 {SPACING_HALF}px 0 0;
+  -gtk-icon-source: none;
+}
+check { border-radius: {R_CHECK}; }
+radio { border-radius: {R_RADIO}; } /* a radio is round by definition: any radius >= half its size */
+check:hover, radio:hover { background-color: @base_hover; box-shadow: 0 0 0 {HALO_SMALL}px alpha(@text, 0.06); }
+check:checked, check:indeterminate, radio:checked, radio:indeterminate {
+  background-color: @primary; border-color: @primary; color: @primary_text; }
+check:checked { -gtk-icon-source: -gtk-icontheme("object-select-symbolic"); }
+check:indeterminate { -gtk-icon-source: -gtk-icontheme("list-remove-symbolic"); }
+/* A checked radio is a ring and a dot of one shape: the dot is the content box (half the indicator),
+ * the padding is the gap, and the box keeps the unchecked size. The dot follows the outer radius, so a square radio
+ * holds a square dot and a round one a round dot, with no glyph. */
+radio:checked { -gtk-icon-source: none; border-color: @primary; padding: {RADIO_PAD}px; -gtk-icon-size: {RADIO_DOT}px;
+  background-color: transparent; background-image: linear-gradient(@primary, @primary), linear-gradient(@base, @base);
+  background-clip: content-box, border-box; }
+check:disabled, radio:disabled { background-color: @disabled_base; border-color: @disabled_border; }
+check:checked:disabled, radio:checked:disabled { background-color: @disabled_strong; border-color: @disabled_strong; color: @disabled_text; }
+radio:checked:disabled { background-color: transparent; background-image: linear-gradient(@disabled_strong, @disabled_strong), linear-gradient(@disabled_base, @disabled_base); }
+checkbutton:focus check, radiobutton:focus radio { outline: {FOCUS}px solid @focus; outline-offset: {FOCUS_OUT}px; }
+checkbutton, radiobutton { padding: 2px 0; }
+switch {
+  min-width: {SWITCH_W}px; min-height: {SWITCH_H}px;
+  background-color: @track; border: {BORDER}px solid @track; border-radius: {R_SWITCH}; color: @text;
+}
+switch:checked { background-color: @primary; border-color: @primary; }
+switch slider {
+  min-width: {SWITCH_H}px; min-height: {SWITCH_H}px; margin: 0;
+  background-color: @text; border: none; border-radius: {R_SLIDER};
+}
+switch:checked slider { background-color: @primary_text; }
+switch:disabled { background-color: @disabled_fill; border-color: @disabled_fill; }
+switch:focus { outline: {FOCUS}px solid @focus; outline-offset: {FOCUS_OUT}px; }
+
+/* Scale, progress, level ------------------------------------------------------- */
+progressbar trough, levelbar trough {
+  background-color: @track; border: none; border-radius: {R_TRACK}; min-height: {TRACK}px; min-width: {TRACK}px; }
+progressbar progress, levelbar block.filled {
+  background-color: @primary; border: none; border-radius: {R_TRACK}; min-height: {TRACK}px; min-width: {TRACK}px; }
+/* Scale: square-cornered trough, highlight and fill (not pills). */
+scale > trough, scale > trough > fill { background-color: @track; border: none; border-radius: 0; min-height: {TRACK}px; min-width: {TRACK}px; }
+scale > trough > highlight { background-color: @primary; border: none; border-radius: 0; min-height: {TRACK}px; min-width: {TRACK}px; }
+scale slider {
+  min-width: {SLIDER}px; min-height: {SLIDER}px; margin: {SLIDER_MARGIN}px;
+  background-color: @primary; border: none; border-radius: {R_SLIDER}; box-shadow: none; outline: none; }
+scale slider:hover { background-color: @primary_hover; }
+scale slider:active { background-color: @primary_pressed; }
+scale slider:disabled { background-color: @disabled_strong; }
+scale > trough:disabled { background-color: @disabled_fill; }
+scale marks, scale mark { color: @muted; }
+scale value { color: @muted; }
+/* Step marks: a 6px tick, 1px wide, set off the trough by the spacing. */
+scale indicator { background-color: @muted; border: none; border-radius: 0; min-width: 1px; min-height: 1px; }
+scale.horizontal indicator { min-height: {SPACING}px; }
+scale.vertical indicator { min-width: {SPACING}px; }
+scale.horizontal marks.top { margin-bottom: {SPACING}px; margin-top: -{MARK_OUT}px; }
+scale.horizontal marks.bottom { margin-top: {SPACING}px; margin-bottom: -{MARK_OUT}px; }
+scale.vertical marks.top { margin-right: {SPACING}px; margin-left: -{MARK_OUT}px; }
+scale.vertical marks.bottom { margin-left: {SPACING}px; margin-right: -{MARK_OUT}px; }
+progressbar { color: @text; }
+progressbar progress { min-height: {SPACING}px; border-radius: {R_PROGRESS}; }
+progressbar trough { min-height: {SPACING}px; border-radius: {R_PROGRESS}; }
+levelbar block { min-width: {LEVEL_W}px; min-height: {SPACING}px; background-color: @track; border-radius: {R_PROGRESS}; }
+levelbar block.low { background-color: @warning; }
+levelbar block.high { background-color: @positive; }
+levelbar block.full { background-color: @primary; }
+
+/* Scrollbars ------------------------------------------------------------------- */
+/* The slider is {SCROLL_VIS}px thick and sits flush on the outer edge of the bar, so the empty
+ * strip (a transparent border of the trough, so the trough's own paint stops at it) is on the content side: GTK puts "right"/"left" on a vertical bar and "bottom"/"top" on a
+ * horizontal one, and the transparent border goes on the opposite side.
+ * The bar keeps its full thickness ({SCROLL}px) as hit area. At least {SCROLL_LEN}px long.
+ * Node path is GTK 4's scrollbar > range > trough > slider. */
+scrollbar { background-color: transparent; border: none; box-shadow: none; outline: none; }
+scrollbar > range > trough { border: 0 solid transparent; background: none; background-clip: padding-box; padding: 0; outline: none; }
+scrollbar > range > trough > slider {
+  min-width: {SCROLL_VIS}px; min-height: {SCROLL_VIS}px; border: none; border-radius: {R_SCROLLBAR};
+  background-color: @thumb; box-shadow: none; outline: none; }
+scrollbar.horizontal > range > trough > slider { min-width: {SCROLL_LEN}px; }
+scrollbar.vertical > range > trough > slider { min-height: {SCROLL_LEN}px; }
+scrollbar.vertical.right > range > trough { border-left-width: {SCROLL_GAP}px; }
+scrollbar.vertical.left > range > trough { border-right-width: {SCROLL_GAP}px; }
+scrollbar.horizontal.bottom > range > trough { border-top-width: {SCROLL_GAP}px; }
+scrollbar.horizontal.top > range > trough { border-bottom-width: {SCROLL_GAP}px; }
+/* A scrolled window is as tall as its scrollbar's minimum, so the slider's minimum length would
+ * pad a short menu; a popover menu has no use for a minimum length. */
+popover scrolledwindow scrollbar.vertical > range > trough > slider { min-height: 0; }
+popover scrolledwindow scrollbar.horizontal > range > trough > slider { min-width: 0; }
+scrollbar > range > trough > slider:hover { background-color: @thumb_hover; }
+scrollbar > range > trough > slider:active { background-color: @thumb_active; }
+scrollbar > range > trough > slider:disabled { background-color: @disabled_fill; }
+/* The hover highlight is painted by the trough, which stops at the empty strip, so it is exactly as wide as the slider. */
+scrollbar.overlay-indicator.dragging > range > trough, scrollbar.overlay-indicator.hovering > range > trough { background-color: alpha(@text, 0.04); }
+scrollbar undershoot, scrollbar overshoot { background: none; border: none; }
+
+/* Notebook, stack switcher ----------------------------------------------------- */
+notebook > header { background-color: @window; border: none; margin: 0; padding: {BORDER}px; border-radius: 0; } /* room for the tab outline (GTK Default: header padding 1px) */
+notebook > header.top { border-bottom: {BORDER}px solid @border_rule; }
+notebook > header.bottom { border-top: {BORDER}px solid @border_rule; }
+notebook > header.left { border-right: {BORDER}px solid @border_rule; }
+notebook > header.right { border-left: {BORDER}px solid @border_rule; }
+notebook > header tabs { margin: 0; }
+notebook > header tab {
+  min-width: 0; min-height: {HEIGHT}px; padding: 0 {PADDING}px;
+  background-color: transparent; color: @tab_text; border: {BORDER}px solid transparent; border-radius: {R_TAB}; }
+notebook > header tab label, notebook > header tab image { color: inherit; opacity: 1; }
+notebook > header tab:hover { background-color: @window_hover; color: @text; }
+notebook > header tab:backdrop, notebook > header tab:disabled { color: @disabled_text; }
+/* The active tab is the selection fill with a full-perimeter boundary, so it differs from hover by more than colour. */
+notebook > header tab:checked { background-color: @selection; color: @selection_text; border-color: @primary; }
+notebook > header tab:checked label, notebook > header tab:checked image { color: @selection_text; }
+notebook > header tab:checked:hover { background-color: @selection_hover; }
+notebook > header tab.needs-attention label, notebook > header tab.needs-attention image { color: @warning; }
+notebook > header tab.needs-attention:not(:checked) { border-color: @warning; }
+notebook > stack:not(:only-child) { background-color: @window; }
+notebook > header tab button { min-height: 0; min-width: 0; padding: 0; border: none; background: none; }
+/* The icon-button rule above outranks plain selectors, so the next two rules spell out its classes. A tab's close button fills the tab's content height (a box child stretches), so it is a square of that height. */
+notebook > header tab button.flat.image-button:not(.text-button) { min-width: {HEIGHT}px; }
+stackswitcher button { min-height: {HEIGHT_INNER}px; padding: 0 {PADDING}px; }
+
+/* Lists and trees -------------------------------------------------------------- */
+treeview.view { background-color: @base; color: @text; }
+treeview.view:selected, treeview.view:selected:focus { background-color: @selection; color: @selection_text; }
+treeview.view:hover { background-color: @base_hover; }
+treeview.view:disabled { color: @disabled_text; }
+treeview.view header button {
+  background-color: @window; color: @text; border: none; border-radius: 0;
+  border-bottom: {BORDER}px solid @border; border-right: {BORDER}px solid @border; padding: 0 {PADDING}px; }
+treeview.view header button:hover { background-color: @button_hover; }
+treeview.view.expander { color: @muted; -gtk-icon-source: -gtk-icontheme("pan-end-symbolic"); }
+treeview.view.expander:checked { -gtk-icon-source: -gtk-icontheme("pan-down-symbolic"); }
+treeview.view acceleditor > label { background-color: @container; }
+treeview.view.dnd { box-shadow: inset 0 0 0 1px @accent; }
+treeview.view.rubberband, rubberband, flowbox rubberband {
+  border: 1px solid @accent; background-color: alpha(@accent, 0.2); }
+list, listview { background-color: @base; color: @text; }
+list row, listview row { padding: 0; background-color: transparent; }
+list > row, listview > row { padding: {SPACING_HALF}px {PADDING_WIDE}px; }
+/* A row's own box (icon + label + ...) gets a gap so an icon never touches its text. */
+list > row > box, listview > row > box, list > row > box > box { border-spacing: {SPACING}px; }
+list row:hover { background-color: @base_hover; }
+list row:selected, list row:selected:focus, columnview row:selected { background-color: @selection; color: @selection_text; }
+iconview:selected, iconview:selected:focus { background-color: @selection; color: @selection_text; }
+row.activatable:hover { background-color: @base_hover; }
+flowbox flowboxchild:selected { background-color: @selection; color: @selection_text; }
+
+/* Menus and popovers ----------------------------------------------------------- */
+menubar, .menubar { background-color: @elevated; color: @text; border: none; border-bottom: {BORDER}px solid @border_rule; padding: 0; }
+/* The GTK 4 menu bar item is the node `item`; `menuitem` is the GTK 3 name. The text gets
+ * the horizontal padding of a toolbar text button (1.5 x padding, see button.text-button above). */
+menubar > menuitem, menubar > item { padding: 0 {MENU_PAD}px; min-height: {HEIGHT_INNER}px; border-radius: 0; background-color: transparent; }
+menubar > menuitem:hover, menubar > item:hover { background-color: @elevated_hover; color: @text; }
+menubar > menuitem:selected, menubar > menuitem:checked, menubar > item:selected, menubar > item:checked { background-color: @selection; color: @selection_text; }
+menubar > menuitem:disabled, menubar > item:disabled { color: @disabled_text; }
+menu, .menu, .context-menu {
+  background-color: @elevated; color: @text;
+  border: {BORDER}px solid @border; border-radius: {R_MENU}; padding: {SPACING}px; margin: 0; }
+menu menuitem, .menu menuitem { min-height: 16px; background-color: transparent; color: @text; }
+menu menuitem:hover { background-color: @elevated_hover; color: @text; }
+menu menuitem:selected { background-color: @selection; color: @selection_text; }
+menu menuitem:disabled { color: @disabled_text; }
+menu menuitem arrow { min-width: 16px; color: @muted; }
+menu separator, .menu separator { margin: 4px 0; background-color: @border_rule; }
+menuitem check, menuitem radio { background-color: transparent; border-color: transparent; }
+menuitem check:checked, menuitem radio:checked { color: @text; background-color: transparent; }
+/* GTK 4 popovers: the popover node is transparent, `contents` is the visible box. The border and the fill
+ * separate it from the page; the shadow is decoration only. */
+popover, popover.background, popover.background:backdrop { background-color: transparent; border: none; box-shadow: none; padding: 0; }
+popover > contents, popover > arrow {
+  padding: {SPACING}px; background-color: @elevated; color: @text; border: {BORDER}px solid @border; border-radius: {R_POPOVER};
+  background-clip: border-box; box-shadow: 0 2px 8px alpha(black, 0.25); }
+popover > contents > list, popover > contents > .view, popover > contents > toolbar { border-style: none; box-shadow: none; background-color: transparent; }
+popover > contents separator { background-color: @border_rule; margin: {SPACING_HALF}px 0; }
+popover modelbutton { min-height: {MENU_H}px; min-width: {MENU_W}px; padding: {SPACING_HALF}px {MENU_PAD}px; border: {BORDER}px solid transparent; border-radius: {R_ROW}; background: none; color: @text; box-shadow: none; }
+popover modelbutton:hover { background-color: @elevated_hover; color: @text; }
+popover modelbutton:selected, popover modelbutton:checked { background-color: @selection; color: @selection_text; }
+popover modelbutton:focus:not(:hover) { box-shadow: none; outline: none; }
+popover modelbutton:disabled { color: @disabled_text; }
+popover modelbutton accelerator { color: @muted; margin-left: {ACCEL}px; }
+tooltip, tooltip.background {
+  background-color: @elevated; color: @text; border: {BORDER}px solid @border; border-radius: {R_TOOLTIP}; }
+tooltip * { background-color: transparent; color: @text; }
+
+/* Bars ------------------------------------------------------------------------- */
+headerbar, .titlebar, headerbar.titlebar, window > .titlebar, window.csd > .titlebar, .titlebar headerbar {
+  min-height: {BAR_H}px; padding: 0 {BAR_PAD}px; margin: 0;
+  background-color: @elevated; color: @text; border: none; border-bottom: {BORDER}px solid @border_rule; border-radius: 0; }
+headerbar:backdrop, .titlebar:backdrop { background-color: @elevated; color: @muted; }
+headerbar entry, headerbar button { background-image: none; }
+/* The title keeps the weight of every other label: typography does not change with state or role. */
+headerbar .subtitle { color: @muted; }
+toolbar, .toolbar, .inline-toolbar { background-color: @elevated; color: @text; padding: {SPACING_HALF}px; border-spacing: {SPACING_HALF}px; }
+statusbar { background-color: @elevated; color: @muted; border-top: {BORDER}px solid @border_rule; padding: {SPACING_HALF}px {PADDING}px; }
+actionbar { background-color: @elevated; border-top: {BORDER}px solid @border_rule; padding: 0; }
+actionbar > revealer > box { padding: {BAR_PAD}px; border-spacing: {BAR_PAD}px; }
+actionbar > revealer > box > box.start, actionbar > revealer > box > box.end { border-spacing: {BAR_PAD}px; }
+/* The boundary and padding belong to the revealed box (searchbar > revealer > box): on the bar itself they
+ * stayed visible as an empty strip when the bar was hidden, e.g. under the Shortcuts window header. */
+searchbar { background-color: @elevated; }
+searchbar > revealer > box { border-bottom: {BORDER}px solid @border_rule; padding: {SPACING_HALF}px; }
+/* Dialog buttons (.dialog-action-box > .dialog-action-area) sit a spacing in from the window edge, a spacing apart. */
+.dialog-action-box { margin: {SPACING}px; }
+.dialog-action-area { border-spacing: {SPACING}px; }
+/* Info bars are tonal: the status colour mixed into the base (StatusTint), a full 1px border in the status
+ * colour, text chosen readable on that fill. The status is carried by hue, border and the icon, not by a solid slab. */
+infobar { border: {BORDER}px solid @border; border-radius: 0; }
+infobar, infobar label { text-shadow: none; }
+infobar.info, infobar.other { background-color: @info_fill; color: @info_on_fill; border-color: @info; }
+infobar.warning { background-color: @warning_fill; color: @warning_on_fill; border-color: @warning; }
+infobar.error { background-color: @negative_fill; color: @negative_on_fill; border-color: @negative; }
+infobar.question { background-color: @info_fill; color: @info_on_fill; border-color: @primary; }
+infobar.success { background-color: @positive_fill; color: @positive_on_fill; border-color: @positive; }
+infobar label, infobar image { color: inherit; }
+infobar button { background-color: transparent; border-color: currentColor; color: inherit; }
+infobar button:hover { background-color: alpha(@text, 0.12); }
+paned > separator { background-color: @border_rule; min-width: 1px; min-height: 1px; }
+/* The line keeps its colour and width in every state (GTK 4 has no negative margins to widen the grab area). */
+expander arrow { min-width: 16px; min-height: 16px; color: @muted; -gtk-icon-source: -gtk-icontheme("pan-end-symbolic"); }
+expander arrow:checked { -gtk-icon-source: -gtk-icontheme("pan-down-symbolic"); }
+calendar:selected { background-color: @primary; color: @primary_text; border-radius: {R_ROW}; }
+calendar.header { color: @text; }
+calendar.button { color: @muted; }
+calendar:indeterminate { color: @disabled_text; }
+colorswatch { border-radius: {R_SURFACE}; border: {BORDER}px solid @border; }
+colorswatch:selected { outline: {FOCUS}px solid @focus; outline-offset: 1px; }
+cellview { background-color: transparent; }
+placessidebar row:selected, .sidebar row:selected { background-color: @selection; color: @selection_text; }
+.sidebar { background-color: @window; border-color: @border; }
+.osd, .osd button { background-color: @button; color: @text; }
+.app-notification { background-color: @button; color: @text; border: {BORDER}px solid @border; border-radius: {R_SURFACE}; padding: {SPACING}px; }
+button.emoji-section { border-radius: 0; }
+
+/* Selected text stays readable on the selection fill in every widget that selects. */
+row:selected label, row:selected image, menuitem:selected label, iconview:selected,
+textview text selection, textview text selection:focus, entry selection:focus, label selection:focus,
+list row:selected label, list row:selected image { color: @selection_text; }
+row:selected:backdrop, treeview.view:selected:backdrop { background-color: @selection; color: @selection_text; }
+
+/* Menu rows: flat and borderless in every state; the popup frame alone carries the border. The 1px
+ * transparent border keeps the box identical in all states so a highlighted row is as wide as the rest. */
+menu menuitem, menu menuitem:hover, menu menuitem:selected, menu menuitem:disabled {
+  border: {BORDER}px solid transparent; border-radius: {R_ROW}; margin: 0; padding: {ITEM_V}px {PADDING}px; box-shadow: none; outline: none; }
+menu menuitem label, menu menuitem arrow, menu menuitem image { background-color: transparent; color: inherit; }
+menu menuitem:selected label, menu menuitem:selected arrow { color: @selection_text; }
+combobox menu menuitem, combobox window.popup menuitem { min-height: {HEIGHT_INNER}px; }
+
+/* A link inside a selection keeps contrast. */
+*:selected link, *:selected *:link { color: @selection_text; }
+
+/* One focus ring for every focusable widget: same width, same offset, same radius. The border
+ * keeps its color so the ring is the only thing that changes. */
+button:focus-visible, entry:focus-visible, spinbutton:focus-visible, combobox:focus-visible, combobox button:focus-visible,
+notebook > header tab:focus-visible, treeview.view:focus-visible, iconview:focus-visible, textview:focus-visible, row:focus-visible,
+modelbutton:focus-visible, switch:focus-visible, button.link:focus-visible, link:focus-visible, colorswatch:focus-visible, scrolledwindow:focus-visible {
+  outline-style: solid; outline-width: {FOCUS}px; outline-color: @focus; outline-offset: {RING_OFFSET}px; }
+check:focus-visible, radio:focus-visible, checkbutton:focus-visible check, radiobutton:focus-visible radio, switch:focus-visible {
+  outline-style: solid; outline-width: {FOCUS}px; outline-color: @focus; outline-offset: {FOCUS_OUT}px; }
+button:focus-visible:not(:hover):not(:active), entry:focus-visible { border-color: @border; }
+scrolledwindow:focus-visible, treeview.view:focus-visible, iconview:focus-visible, textview:focus-visible { outline-style: none; }
+button:backdrop, entry:backdrop { outline-style: none; }
+
+/* GTK 4 specifics -------------------------------------------------------------- */
+entry > text, spinbutton > text, searchentry > text { background: none; color: inherit; border: none; box-shadow: none; outline: none; }
+entry > text > selection, text > selection { background-color: @selection; color: @selection_text; }
+entry > text > placeholder, text > placeholder { color: @muted; }
+dropdown > button, dropdown popover listview, dropdown popover.background contents { background-color: @button; color: @text; }
+dropdown popover listview > row { min-height: {HEIGHT_INNER}px; padding: 0 {PADDING}px; border-radius: {R_ROW}; border: {BORDER}px solid transparent; }
+dropdown popover listview > row:selected, dropdown popover listview > row:hover { background-color: @selection; color: @selection_text; }
+columnview > listview > row { padding: {SPACING_HALF}px {PADDING_WIDE}px; }
+columnview > header > button { background-color: @window; border-radius: 0; border-width: 0 {BORDER}px {BORDER}px 0; }
+tooltip > box { background: none; }
+
+/* The slider overflows the thin trough through a negative margin, and the
+ * scale's padding (half the slider plus the spacing) holds that room so stacked sliders never touch. */
+scale.horizontal { min-height: {TRACK}px; padding: {SCALE_PAD}px 0; margin: 0; }
+scale.vertical { min-width: {TRACK}px; padding: 0 {SCALE_PAD}px; margin: 0; }
+
+windowcontrols { border-spacing: {BAR_PAD}px; }
+headerbar > windowhandle > box, headerbar > windowhandle > box > box.start, headerbar > windowhandle > box > box.end { border-spacing: {BAR_PAD}px; }
+windowcontrols button { min-width: {HEIGHT_INNER}px; min-height: {HEIGHT_INNER}px; margin: 0; padding: 0; border-radius: {R_BUTTON}; background-color: transparent; border-color: transparent; }
+windowcontrols button:hover { background-color: @button_hover; }
+windowcontrols button.close:hover { background-color: @negative; color: @negative_text; }
+/* Header bar children keep the spacing above and below so they sit at their own height instead of stretching to the bar
+ * Buttons inside a composite widget sit flush with it. */
+headerbar entry, headerbar spinbutton, headerbar splitbutton, headerbar button, headerbar menubutton, headerbar stackswitcher,
+headerbar dropdown, headerbar colorbutton, headerbar fontbutton, headerbar .linked, headerbar checkbutton,
+headerbar separator:not(.sidebar) { margin-top: {BAR_PAD}px; margin-bottom: {BAR_PAD}px; }
+/* A switch is smaller than a control: centre it in the bar content instead of stretching it. */
+headerbar switch { margin: {SWITCH_BAR}px 0; }
+/* The bar is the colour of the resting track, so an unchecked switch gets the control border to show its size. */
+headerbar switch:not(:checked) { border-color: @border; }
+headerbar menubutton > button, headerbar spinbutton > button, headerbar splitbutton > button, headerbar splitbutton > menubutton,
+headerbar .linked > menubutton, headerbar entry > menubutton, headerbar stackswitcher > button,
+headerbar dropdown > button, headerbar colorbutton > button, headerbar fontbutton > button,
+headerbar .linked > button, headerbar .linked > entry { margin-top: 0; margin-bottom: 0; }
+headerbar stackswitcher > button { padding: 0 {BAR_TAB_PAD}px; }
+/* GTK centres only the icon inside a window-control button, never the button, so the button
+ * fills the bar: the bar content is BAR_H = control + 2 * BAR_PAD and this margin leaves exactly the control box, a
+ * square. Horizontal gaps come from border-spacing, so no side margin. */
+headerbar windowcontrols > button { margin: {BAR_PAD}px 0; }
+
+/* State layer ----------------------------------------------------------------- *
+ * Later rules win at equal specificity, so this
+ * layer states the shared state model once and then covers every manifest hook the layers above
+ * do not reach. Colour-only state changes, one border, no side strips, no weight or size change. */
+
+/* Selection: a tonal fill, a boundary in the primary colour, the readable text colour. Rows keep
+ * their size in every state (the boundary exists, transparent, in the rest state). */
+row, listview > row, columnview > listview > row, gridview > child, flowboxchild, iconview, treeview.view {
+  border: {BORDER}px solid transparent; transition: {TRANSITION}; }
+row:hover, listview > row:hover, gridview > child:hover, flowboxchild:hover { background-color: @base_hover; }
+row:selected, listview > row:selected, columnview > listview > row:selected, gridview > child:selected,
+flowboxchild:selected, iconview:selected, treeview.view:selected {
+  background-color: @selection; color: @selection_text; border-color: @selection_border; }
+row:selected:hover, listview > row:selected:hover, gridview > child:selected:hover { background-color: @container_hover; }
+row:disabled, listview > row:disabled { color: @disabled_text; }
+row:active, listview > row:active { background-color: @base_pressed; transition: none; }
+
+/* Boxes, grids and structure carry no paint of their own. */
+widget, grid, revealer, aspectframe, popoverbin, graphicsoffload, windowhandle { box-shadow: none; text-shadow: none; }
+window.dialog, window.devel { border: {BORDER}px solid @border; }
+.titlebar:not(headerbar) { padding: 0 {BAR_PAD}px; min-height: {BAR_H}px; border-width: 0 0 {BORDER}px; border-radius: 0;
+  background-color: @window; border-style: solid; border-color: @border_rule; }
+scrolledwindow junction { background-color: @window; border: none; }
+
+/* Pickers built from a button: same recipe as button, the preview swatch keeps its own colour. */
+/* colorbutton and fontbutton are wrappers around a real button.color / button.font:
+ * the wrapper stays plain so the whole visible box is the clickable button. */
+colorbutton, fontbutton { padding: 0; margin: 0; border: none; background: none; min-height: 0; }
+colorbutton > button, fontbutton > button { min-height: {HEIGHT_INNER}px; padding: 0 {PADDING}px; }
+colorbutton > button.color { min-width: {HEIGHT_INNER}px; padding: 0; }
+colorbutton > button.color colorswatch { min-width: 0; min-height: 0; border-radius: {R_ROW}; }
+fontbutton > button.font > box { border-spacing: {SPACING_HALF}px; }
+/* The size part is a separator and a label. The label is centred by default, so a
+ * minimum width gives the number room on both sides of its own box instead of touching the separator. */
+fontbutton > button.font > box > box { border-spacing: 0; }
+fontbutton > button.font > box > box > label { min-width: {HEIGHT_INNER}px; }
+scalebutton { min-height: {HEIGHT_INNER}px; padding: 0 {PADDING}px; border: {BORDER}px solid @border;
+  border-radius: {R_BUTTON}; background-color: @button; color: @text; }
+scalebutton:hover { background-color: @button_hover; border-color: @border_hover; }
+scalebutton:disabled { background-color: @disabled_fill; color: @disabled_text; border-color: @disabled_border; }
+scalebutton.scale { background-color: @window; }
+passwordentry, editablelabel { min-height: {HEIGHT_INNER}px; }
+passwordentry { background-color: @base; border: {BORDER}px solid @border; border-radius: {R_INPUT}; padding: 0 {PADDING_WIDE}px; }
+passwordentry:focus-within { border-color: @focus; }
+passwordentry:disabled { background-color: @disabled_base; color: @disabled_text; border-color: @disabled_border; }
+editablelabel { border: {BORDER}px solid transparent; border-radius: {R_INPUT}; }
+editablelabel:focus-within { background-color: @base; border-color: @focus; }
+
+/* Text engine internals. */
+text block-cursor, text > cursor { color: @text; background-color: @text; }
+preedit { text-decoration: underline; text-decoration-color: @muted; }
+preedit.whole { text-decoration: underline; }
+preedit.selection { background-color: @selection; color: @selection_text; }
+preedit.spelling-error { text-decoration: underline; text-decoration-style: wavy; text-decoration-color: @negative; }
+cursor-handle { color: @primary; background-color: @primary; }
+magnifier { background-color: @base; border: {BORDER}px solid @border; border-radius: {R_SURFACE}; }
+
+/* Media: never recoloured, only disabled. */
+picture, video, svg { background-color: transparent; border: none; }
+picture:disabled { opacity: 0.38; }
+video { background-color: @scrim; color: @text; }
+
+/* Spinner and expanders. */
+spinner { color: @primary; }
+spinner:disabled { color: @disabled_text; }
+expander-widget > box > title > expander, treeexpander > expander { color: @muted; }
+expander-widget > box > title:hover > expander { color: @text; }
+treeexpander { padding: 0; }
+
+/* Sidebars and path bars. */
+stacksidebar, stacksidebar.sidebar { background-color: @window; border: none; }
+stacksidebar row { padding: 0 {PADDING}px; min-height: {HEIGHT_INNER}px; border-radius: {R_ROW}; }
+pathbar { border-spacing: {SPACING_HALF}px; }
+pathbar > button { border-radius: {R_BUTTON}; }
+pathbar > button:checked { background-color: @selection; color: @selection_text; border-color: @selection_border; }
+
+/* Calendar. */
+calendar { background-color: @base; color: @text; border: {BORDER}px solid @border_subtle; border-radius: {R_SURFACE}; padding: {SPACING}px; }
+calendar .day-name, calendar .week-number { color: @muted; }
+calendar .day-number { border: {BORDER}px solid transparent; border-radius: {R_ROW}; min-width: {HEIGHT_INNER}px; min-height: {HEIGHT_INNER}px; }
+calendar .day-number:hover { background-color: @base_hover; }
+calendar .day-number:selected { background-color: @selection; color: @selection_text; border-color: @selection_border; }
+calendar .day-number.other-month { color: @disabled_text; }
+calendar .today { border-color: @primary; }
+calendar .today:selected { border-color: @selection_border; }
+
+/* Choosers. */
+colorchooser, fontchooser, filechooser { background-color: @window; color: @text; }
+/* The swatch paints its colour over its whole box and then its child node `overlay` (allocated to the
+ * whole box), so the boundary goes on the overlay: on the swatch it was covered along the bottom of the add-colour swatch. */
+colorchooser colorswatch { border: none; }
+colorchooser colorswatch > overlay { border: {BORDER}px solid @border; border-radius: {R_ROW}; }
+colorchooser colorswatch:selected > overlay { border-color: @selection_border; }
+colorchooser colorswatch:hover > overlay { border-color: @border_hover; }
+colorchooser plane { border: {BORDER}px solid @border; border-radius: {R_SURFACE}; }
+filelistcell, filechooser filelistcell { padding: 0 {SPACING}px; }
+filethumbnail { border-radius: {R_ROW}; }
+placesview { background-color: @window; }
+placesview row { border-radius: {R_ROW}; }
+
+/* Shortcuts window: keycaps are badges with a boundary, group titles are muted. */
+shortcut > .keycap, shortcuts-keycap, .keycap { background-color: @button; color: @text; border: {BORDER}px solid @border;
+  border-radius: {R_BADGE}; padding: 0 {SPACING}px; min-height: {SPACING}px; }
+shortcuts-section, .shortcuts-search-results { background-color: @window; }
+/* The page margin is stated here, not left to the fallback theme GTK loads under this one (which gives 20px). */
+shortcuts-section { margin: {PAGE_PAD}px; }
+.shortcuts-search-results { margin: {PAGE_PAD}px; border-spacing: {PAGE_PAD}px; }
+shortcut { color: @text; }
+
+/* Disabled: one rule for every control the layers above style piecemeal. */
+button:disabled, entry:disabled, spinbutton:disabled, combobox:disabled, switch:disabled, check:disabled, radio:disabled { transition: none; }
+windowbuttonsquartz { background-color: transparent; border: none; }
+
+/* Named status colours used as a fill carry their own readable foreground: the *_text roles are computed, never
+ * assumed, and chosen readable on the role by the engine's contrast guard. */
+button.accent { background-color: @primary; color: @primary_text; border-color: @primary; }
+button.success { background-color: @positive; color: @positive_text; border-color: @positive; }
+button.warning { background-color: @warning; color: @warning_text; border-color: @warning; }
+button.error { background-color: @negative; color: @negative_text; border-color: @negative; }
+button.accent:hover { background-color: @primary_hover; }
+button.error:hover { background-color: @negative_hover; }
+/* The universal rule above gives every node its own colour, so a button's label and icon take the button's colour
+ * explicitly, in every state (the foreground is chosen per background where the fill is set, then inherited). */
+button box, button label, button image, button arrow { color: inherit; }
+/* A role fill is for an enabled action: disabled, every role button reads as a plain disabled button (same dimmed fill,
+ * text and boundary), whichever fill it had, and the enabled -> disabled change swaps foreground and background together. */
+button.suggested-action:disabled, button.destructive-action:disabled, button.accent:disabled, button.success:disabled,
+button.warning:disabled, button.error:disabled { background-color: @disabled_fill; color: @disabled_text; border-color: @disabled_border; }
+label.accent { color: @primary; }
+
+/* Lists beside a scrollbar: the overlay slider is {SCROLL_VIS}px wide on the row's end edge, so rows in a scrolled
+ * window keep that much clear on the end side, so content is never under the control. */
+scrolledwindow list > row, scrolledwindow listview > row {
+  padding-right: calc({PADDING}px + {SCROLL_VIS}px); }
+
+/* Icons: a symbolic icon beside text is one spacing from it, and an icon at the edge of a row, entry or bar keeps the
+ * control's side padding. */
+row > box > image:first-child, row > image:first-child { margin-right: {SPACING}px; }
+entry > image.left { margin-left: {SPACING_HALF}px; margin-right: {SPACING_HALF}px; }
+entry > image.right { margin-left: {SPACING_HALF}px; margin-right: {SPACING_HALF}px; }
+menuitem > box > image, modelbutton > box > image { margin-right: {SPACING}px; }
+tab > box > image, notebook > header tab image { margin-right: {SPACING_HALF}px; }

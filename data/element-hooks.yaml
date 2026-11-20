@@ -1,0 +1,310 @@
+# The element ids and the CSS node hooks of the GTK 4 widgets. elements.py turns this into a C table;
+# [Element.<id>] overrides are checked against the ids.
+- id: widget
+  hooks: ["widget"]
+- id: window
+  hooks: ["window", "window:backdrop", "window.dialog", "window.devel"]
+- id: window-titlebar
+  hooks: [".titlebar:not(headerbar)"]
+- id: windowhandle
+  hooks: ["windowhandle"]
+- id: windowbuttonsquartz
+  hooks: ["windowbuttonsquartz"]
+- id: windowcontrols
+  hooks: ["windowcontrols", "windowcontrols > button.minimize", "windowcontrols > button.maximize", "windowcontrols > button.close"]
+- id: headerbar
+  hooks: ["headerbar", "headerbar:backdrop", "headerbar.default-decoration"]
+- id: headerbar-title
+  hooks: ["headerbar .title", "headerbar label.title"]
+- id: assistant-window
+  hooks: ["window.assistant"]
+- id: aboutdialog
+  hooks: ["window.aboutdialog", "window.aboutdialog image.large-icons"]
+- id: aboutdialog-link
+  hooks: ["link"]
+- id: messagedialog
+  hooks: ["window.message", "window.dialog.message"]
+- id: print-dialog
+  hooks: ["window.dialog.print"]
+- id: shortcuts-window
+  hooks: ["shortcut", "shortcut > .keycap", "shortcuts-section", ".shortcuts-search-results"]
+- id: shortcuts-section
+  hooks: ["shortcuts-section"]
+- id: shortcuts-keycap
+  hooks: ["shortcut > .keycap"]
+- id: emoji-picker
+  hooks: ["popover.emoji-picker", "popover.emoji-picker > contents", "popover.emoji-picker .emoji"]
+- id: emoji-picker-label
+  hooks: ["popover.emoji-picker .emoji", "emoji-completion-row emoji:hover"]
+- id: popover
+  hooks: ["popover", "popover.background", "popover.menu", "popover.entry-completion"]
+- id: popover-arrow
+  hooks: ["popover > arrow"]
+- id: popover-contents
+  hooks: ["popover > contents", "popover.emoji-picker > contents"]
+- id: popovermenu
+  hooks: ["popover.menu"]
+- id: popoverbin
+  hooks: ["popoverbin"]
+- id: modelbutton
+  hooks: ["modelbutton", "modelbutton.flat", "modelbutton.title", "modelbutton.model"]
+- id: modelbutton-arrow
+  hooks: ["modelbutton.flat arrow"]
+- id: button
+  hooks: ["button", "button:hover", "button:active", "button:checked", "button:disabled", "button.flat", "button.image-button", "button.keyboard-activating"]
+- id: togglebutton
+  hooks: ["button:checked"]
+- id: linkbutton
+  hooks: ["button.link", "link"]
+- id: checkbutton
+  hooks: ["checkbutton", "checkbutton:checked", "checkbutton.grouped", "checkbutton.text-button"]
+- id: checkbutton-check
+  hooks: ["check", "checkbutton check", "checkbutton:checked check"]
+- id: checkbutton-radio
+  hooks: ["radio", "checkbutton.grouped radio"]
+- id: switch
+  hooks: ["switch", "switch:checked", "switch:disabled", "switch slider"]
+- id: switch-slider
+  hooks: ["switch slider", "switch:checked slider"]
+- id: colorbutton
+  hooks: ["colorbutton", "colorbutton > button"]
+- id: fontbutton
+  hooks: ["fontbutton", "fontbutton > button"]
+- id: scalebutton
+  hooks: ["scalebutton", "scalebutton.scale"]
+- id: menubutton
+  hooks: ["menubutton", "menubutton arrow", "menubutton arrow.down", "menubutton arrow.up"]
+- id: menubutton-arrow
+  hooks: ["menubutton arrow", "menubutton arrow.down", "menubutton arrow.up", "menubutton arrow.none"]
+- id: dropdown
+  hooks: ["dropdown", "dropdown > button", "dropdown > button > box", "dropdown popover"]
+- id: combobox
+  hooks: ["combobox", "combobox > box > button"]
+- id: entry
+  hooks: ["entry", "entry:focus-within", "entry:disabled", "entry.error", "entry image.left"]
+- id: searchentry
+  hooks: ["entry", "searchbar entry"]
+- id: passwordentry
+  hooks: ["entry", "passwordentry"]
+- id: text
+  hooks: ["entry > text", "spinbutton > text", "editablelabel > stack > text", "text"]
+- id: text-undershoot
+  hooks: ["text undershoot.left", "text undershoot.right"]
+- id: text-block-cursor
+  hooks: ["text block-cursor"]
+- id: text-selection
+  hooks: ["text selection", "text selection:focus"]
+- id: spinbutton
+  hooks: ["spinbutton", "spinbutton > text", "spinbutton button", "spinbutton button.up", "spinbutton button.down"]
+- id: spinbutton-up
+  hooks: ["spinbutton button.up"]
+- id: spinbutton-down
+  hooks: ["spinbutton button.down"]
+- id: editablelabel
+  hooks: ["editablelabel", "editablelabel > stack > text", "editablelabel:focus-within"]
+- id: label
+  hooks: ["label", "label.dim-label", "label.title", "label link", "label selection"]
+- id: label-link
+  hooks: ["label link", "label link:hover", "label link:visited"]
+- id: label-selection
+  hooks: ["label selection"]
+- id: inscription
+  hooks: ["label", "label.dim-label"]
+- id: preedit
+  hooks: ["preedit", "preedit.whole", "preedit.selection", "preedit.spelling-error"]
+- id: image
+  hooks: ["image", "image:disabled", "image.large-icons", "image.normal-icons"]
+- id: picture
+  hooks: ["picture", "picture:disabled"]
+- id: video
+  hooks: ["video"]
+- id: mediacontrols
+  hooks: ["controls", "controls button"]
+- id: dragicon
+  hooks: ["dnd"]
+- id: cursor-handle
+  hooks: ["cursor-handle"]
+- id: magnifier
+  hooks: ["magnifier"]
+- id: svg
+  hooks: ["svg"]
+- id: graphicsoffload
+  hooks: ["graphicsoffload"]
+- id: scrollbar
+  hooks: ["scrollbar", "scrollbar.horizontal", "scrollbar.vertical", "scrollbar > range > trough > slider"]
+- id: scrollbar-trough
+  hooks: ["scrollbar > range > trough"]
+- id: scrollbar-slider
+  hooks: ["scrollbar > range > trough > slider", "scrollbar slider:hover"]
+- id: scale
+  hooks: ["scale", "scale.horizontal", "scale.vertical", "scale.marks-before", "scale.marks-after", "scale.color"]
+- id: scale-trough
+  hooks: ["scale > range > trough"]
+- id: scale-slider
+  hooks: ["scale > range > trough > slider"]
+- id: scale-highlight
+  hooks: ["scale > range > trough > highlight"]
+- id: scale-mark
+  hooks: ["scale mark"]
+- id: progressbar
+  hooks: ["progressbar", "progressbar.horizontal", "progressbar.vertical", "progressbar trough", "progressbar progress"]
+- id: progressbar-trough
+  hooks: ["progressbar trough", "progressbar trough.empty", "progressbar trough.full"]
+- id: progressbar-progress
+  hooks: ["progressbar progress", "progressbar progress.pulse"]
+- id: levelbar
+  hooks: ["levelbar", "levelbar trough", "levelbar block", "levelbar block.filled", "levelbar block.empty"]
+- id: levelbar-trough
+  hooks: ["levelbar trough"]
+- id: levelbar-block
+  hooks: ["levelbar block", "levelbar block.filled", "levelbar block.empty", "levelbar block.high", "levelbar block.low"]
+- id: spinner
+  hooks: ["spinner"]
+- id: notebook
+  hooks: ["notebook", "notebook.frame", "notebook > header", "notebook > header.top"]
+- id: notebook-header
+  hooks: ["notebook > header", "notebook > header.top", "notebook > header.bottom"]
+- id: notebook-tab
+  hooks: ["notebook tab", "notebook tab:checked", "notebook tab.reorderable-page"]
+- id: notebook-arrow
+  hooks: ["notebook arrow", "notebook arrow.up", "notebook arrow.down"]
+- id: stack
+  hooks: ["stack"]
+- id: stackswitcher
+  hooks: ["stackswitcher", "stackswitcher.linked", "stackswitcher.circular", "stackswitcher button.needs-attention"]
+- id: sidebarrow
+  hooks: ["row", "row:selected", "row.needs-attention"]
+- id: stacksidebar
+  hooks: ["stacksidebar", "stacksidebar.sidebar", "stacksidebar list.navigation-sidebar"]
+- id: paned
+  hooks: ["paned", "paned > separator", "paned > separator:hover"]
+- id: paned-separator
+  hooks: ["paned > separator"]
+- id: separator
+  hooks: ["separator", "separator.horizontal", "separator.vertical", "separator.sidebar"]
+- id: frame
+  hooks: ["frame", "frame > border"]
+- id: aspectframe
+  hooks: ["aspectframe"]
+- id: expander
+  hooks: ["expander-widget", "expander-widget > title", "expander", "expander:checked"]
+- id: expander-title
+  hooks: ["expander-widget > title"]
+- id: expander-arrow
+  hooks: ["expander", "expander.horizontal"]
+- id: actionbar
+  hooks: ["actionbar", "actionbar > revealer > box"]
+- id: actionbar-start
+  hooks: ["actionbar > revealer > box.start"]
+- id: actionbar-end
+  hooks: ["actionbar > revealer > box.end"]
+- id: searchbar
+  hooks: ["searchbar", "searchbar > revealer > box", "searchbar button.close"]
+- id: searchbar-close
+  hooks: ["searchbar button.close"]
+- id: infobar
+  hooks: ["infobar", "infobar.info", "infobar.warning", "infobar.error"]
+- id: statusbar
+  hooks: ["statusbar"]
+- id: toolbar
+  hooks: [".toolbar", ".toolbar button"]
+- id: box
+  hooks: ["box", "box.horizontal", "box.vertical", "box.linked"]
+- id: centerbox
+  hooks: ["box"]
+- id: grid
+  hooks: ["grid"]
+- id: overlay
+  hooks: ["overlay"]
+- id: viewport
+  hooks: ["viewport"]
+- id: revealer
+  hooks: ["revealer"]
+- id: pathbar
+  hooks: ["pathbar", "pathbar scrolledwindow undershoot.left", "pathbar button"]
+- id: scrolledwindow
+  hooks: ["scrolledwindow", "scrolledwindow.frame", "scrolledwindow overshoot", "scrolledwindow undershoot"]
+- id: scrolledwindow-overshoot
+  hooks: ["scrolledwindow overshoot.top", "scrolledwindow overshoot.bottom"]
+- id: scrolledwindow-undershoot
+  hooks: ["scrolledwindow undershoot.top", "scrolledwindow undershoot.bottom"]
+- id: scrolledwindow-junction
+  hooks: ["scrolledwindow junction"]
+- id: treeexpander
+  hooks: ["treeexpander"]
+- id: treeview
+  hooks: ["treeview.view", "treeview.view radio", "treeview entry"]
+- id: iconview
+  hooks: ["iconview", "iconview:selected"]
+- id: textview
+  hooks: ["textview", "textview text", "textview border"]
+- id: textview-border
+  hooks: ["textview border.left", "textview border.top"]
+- id: textview-child
+  hooks: ["textview child"]
+- id: calendar
+  hooks: ["calendar", "calendar.view", "calendar > header", "calendar .day-number", "calendar .today"]
+- id: calendar-header
+  hooks: ["calendar > header"]
+- id: calendar-day-name
+  hooks: ["calendar .day-name"]
+- id: calendar-week-number
+  hooks: ["calendar .week-number"]
+- id: calendar-day-number
+  hooks: ["calendar .day-number", "calendar .other-month", "calendar .today"]
+- id: listview
+  hooks: ["listview", "listview > row", "listview > row:selected", "listview:not(:focus-within) > row:selected"]
+- id: gridview
+  hooks: ["gridview", "gridview > child"]
+- id: columnview
+  hooks: ["columnview", "columnview.complex", "columnview row:not(:selected) cell editablelabel:focus-within"]
+- id: columnview-row
+  hooks: ["columnview row", "columnview row:selected"]
+- id: columnview-cell
+  hooks: ["columnview row cell", "columnview row:not(:selected) cell editablelabel"]
+- id: columnview-title
+  hooks: ["columnview header button", "columnview header button.ascending", "columnview header button.descending"]
+- id: list-header
+  hooks: ["header"]
+- id: listbox
+  hooks: ["list", "list.boxed-list", "list.navigation-sidebar"]
+- id: listbox-row
+  hooks: ["list > row", "list > row:selected", "list > row:hover", "list > row:active"]
+- id: listitem-row
+  hooks: ["listview > row", "listview > row:selected"]
+- id: listfactory-row
+  hooks: ["row", "row:selected"]
+- id: flowbox
+  hooks: ["flowbox", "flowbox > flowboxchild", "flowbox rubberband"]
+- id: flowbox-rubberband
+  hooks: ["flowbox rubberband"]
+- id: flowbox-child
+  hooks: ["flowbox > flowboxchild", "flowbox > flowboxchild:selected"]
+- id: colorchooser
+  hooks: ["colorchooser", "colorchooser swatch"]
+- id: colorswatch
+  hooks: ["colorswatch", "colorswatch.activatable", "colorswatch.light", "colorswatch.dark"]
+- id: colorplane
+  hooks: ["plane"]
+- id: colorscale
+  hooks: ["scale.color"]
+- id: fontchooser
+  hooks: ["fontchooser"]
+- id: filechooser
+  hooks: ["filechooser", "filechooser.linked", "filechooserbutton > button > box"]
+- id: filechooser-cell
+  hooks: ["filelistcell"]
+- id: filechooser-thumbnail
+  hooks: ["filethumbnail"]
+- id: placessidebar
+  hooks: ["placessidebar", "placessidebar.sidebar"]
+- id: placesview
+  hooks: ["placesview"]
+- id: tooltip
+  hooks: ["tooltip", "tooltip.csd"]
+- id: menubar
+  hooks: ["menubar", "menubar > item", "menubar > item:hover", "menubar > item:checked"]
+- id: menubar-item
+  hooks: ["menubar > item", "menubar > item:checked"]
+- id: theme-colors
+  hooks: []

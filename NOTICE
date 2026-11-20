@@ -1,0 +1,8 @@
+rice-gtk4 is distributed under GPL-3.0-or-later (see LICENSE).
+
+Dependencies, linked and not bundled:
+
+  rice-colors  GPL-3.0-or-later
+  rice-ini     GPL-3.0-or-later
+  GTK 4        LGPL-2.1-or-later (as GTK states it in its README and meson.build;
+               some GTK source files carry an LGPL-2.0-or-later header)
