@@ -13,7 +13,7 @@ SOURCES := $(sort $(wildcard src/*/*.c src/*/*.h tests/*.c tests/*.h))
 VERSION := $(shell cat VERSION)
 
 .DEFAULT_GOAL := help
-.PHONY: help build test check install uninstall fmt format-check lint compdb clean
+.PHONY: help build test check install uninstall fmt format-check lint compdb clean release-plan release-patch release-minor release-major
 
 help:
 	@printf '%s\n' \
@@ -27,6 +27,8 @@ help:
 		'  format-check  Fail if a source is not formatted' \
 		'  lint          Run clang-tidy over src/ (writes compile_commands.json first)' \
 		'  compdb        Write compile_commands.json with bear (for clangd and clang-tidy)' \
+		'  release-plan  Show the next patch release without changing anything' \
+		'  release-patch|minor|major  Check, bump VERSION, sign the tag, push (see scripts/release)' \
 		'  clean         Remove $(BUILD_DIR)/ and compile_commands.json' \
 		'Variables: PREFIX BUILD_DIR DESTDIR PKG_CONFIG_PATH'
 
@@ -60,6 +62,13 @@ lint: compdb
 	$(CLANG_TIDY) --config-file=.clang-tidy -p . $(sort $(wildcard src/*/*.c))
 
 check: format-check test lint
+
+# Cuts the next release; see scripts/release --help. Needs the release key: export GNUPGHOME first.
+release-plan:
+	@bash scripts/release patch --plan $(RELEASE_ARGS)
+
+release-patch release-minor release-major: release-%:
+	@bash scripts/release $* $(RELEASE_ARGS)
 
 clean:
 	rm -rf -- "$(BUILD_DIR)" compile_commands.json

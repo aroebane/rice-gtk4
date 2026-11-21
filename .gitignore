@@ -31,5 +31,8 @@
 !/data/designs/
 !/data/designs/*.ini
 
+!/scripts/
+!/scripts/release
+
 !/tests/
 !/tests/**
