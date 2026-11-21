@@ -36,6 +36,146 @@ static r4_color pick(const r4_theme *t, r4_ctl i, r4_color derived)
     return has_ctl(t, i) ? t->ctl[i] : derived;
 }
 
+/* A hover colour; the resting one when the pointer is not to be heard (PointerHover=false). */
+static r4_color hov(const r4_theme *t, r4_color hovered, r4_color rest)
+{
+    return t->knobs.pointer_hover ? hovered : rest;
+}
+
+/* The colour the engine gives a role name of the producer's behaviour profile. The producer chooses
+ * the role (what each emphasis paints in each state); the colour stays the engine's own, so its
+ * [Colors] overrides, the contrast guard and the amounts apply. */
+static r4_color role_color(const r4_theme *t, r4_role r, r4_color base)
+{
+    switch (r) {
+    case R4_ROLE_NONE:
+        return ricecol_from_rgba16(0, 0, 0, 0);
+    case R4_ROLE_SURFACE:
+        return base;
+    case R4_ROLE_HOVER_SURFACE:
+    case R4_ROLE_FOCUS_SURFACE:
+        return pick(t, R4_CTL_HOVER_SURFACE, r4_hover(t, base));
+    case R4_ROLE_PRESSED_SURFACE:
+        return pick(t, R4_CTL_PRESSED_SURFACE, r4_pressed(t, base));
+    case R4_ROLE_CONTAINER:
+    case R4_ROLE_CURRENT_CONTAINER:
+        return t->container;
+    case R4_ROLE_CONTAINER_HOVER:
+        return pick(t, R4_CTL_CONTAINER_HOVER, r4_hover(t, t->container));
+    case R4_ROLE_CONTAINER_PRESSED:
+        return pick(t, R4_CTL_CONTAINER_PRESSED, r4_pressed(t, t->container));
+    case R4_ROLE_DISABLED_SURFACE:
+        return r4_disabled_fill(t, t->base);
+    case R4_ROLE_PRIMARY:
+    case R4_ROLE_CURRENT:
+        return t->primary;
+    case R4_ROLE_PRIMARY_HOVER:
+    case R4_ROLE_PRIMARY_FOCUS:
+        return pick(t, R4_CTL_PRIMARY_HOVER, r4_hover(t, t->primary));
+    case R4_ROLE_PRIMARY_PRESSED:
+        return pick(t, R4_CTL_PRIMARY_PRESSED, r4_pressed(t, t->primary));
+    case R4_ROLE_TEXT:
+        return t->text;
+    case R4_ROLE_MUTED:
+        return t->muted;
+    case R4_ROLE_CONTAINER_TEXT:
+    case R4_ROLE_CURRENT_TEXT:
+        return t->container_text;
+    case R4_ROLE_DISABLED_TEXT:
+        return pick(t, R4_CTL_DISABLED_TEXT, r4_disabled_text(t, t->text));
+    case R4_ROLE_PRIMARY_TEXT:
+        return t->primary_text;
+    case R4_ROLE_OUTLINE:
+        return t->border;
+    case R4_ROLE_FOCUS:
+        return t->focus;
+    case R4_ROLE_HOVER:
+        return r4_mix(t->border, t->text, 2 * t->knobs.hover_layer);
+    case R4_ROLE_DISABLED_BORDER:
+        /* The enabled boundary dimmed like disabled text, so a disabled control keeps an outline
+         * (one equal to its fill would vanish). */
+        return r4_disabled_text(t, t->border);
+    case R4_ROLE_UNSET:
+    case R4_ROLE_COUNT:
+        break;
+    }
+    return t->text;
+}
+
+/* What each emphasis paints per state, as @{outline,flat,solid}_<slot>. A slot the producer did not
+ * name keeps the engine's own look. The paint states of a family are the same set for every
+ * widget of that emphasis; the template picks the family each widget belongs to. */
+static void paint_colors(GString *o, const r4_theme *t)
+{
+    static const char *const emph[R4_PE_COUNT] = {"outline", "flat", "solid"};
+    static const char *const slot[R4_PS_COUNT] = {"rest_border",
+                                                  "hover_border",
+                                                  "pressed_fill",
+                                                  "pressed_border",
+                                                  "select_fill",
+                                                  "select_text",
+                                                  "select_border",
+                                                  "disabled_fill",
+                                                  "disabled_border"};
+    const r4_color none = ricecol_from_rgba16(0, 0, 0, 0);
+    const r4_color sel_border = t->knobs.selection_boundary ? t->primary : t->border;
+    const r4_color hover_border = r4_mix(t->border, t->text, 2 * t->knobs.hover_layer);
+    for (int e = 0; e < R4_PE_COUNT; ++e) {
+        const gboolean solid = e == R4_PE_SOLID, flat = e == R4_PE_FLAT;
+        /* What "surface" means: the fill the widgets of this emphasis rest on. */
+        const r4_color rest_fill = solid ? t->primary : flat ? t->base : t->button;
+        /* The engine's own look, by emphasis (what the template did before the table existed). */
+        const r4_color own[R4_PS_COUNT] = {
+            solid  ? t->primary
+            : flat ? none
+                   : t->border,
+            solid  ? t->primary
+            : flat ? none
+                   : hover_border,
+            solid  ? pick(t, R4_CTL_PRIMARY_PRESSED, r4_pressed(t, t->primary))
+            : flat ? pick(t, R4_CTL_PRESSED_SURFACE, r4_pressed(t, t->base))
+                   : r4_pressed(t, t->button),
+            solid  ? t->primary
+            : flat ? none
+                   : hover_border,
+            solid  ? t->primary
+            : flat ? pick(t, R4_CTL_SELECTION, t->container)
+                   : t->container,
+            solid  ? t->primary_text
+            : flat ? pick(t, R4_CTL_SELECTION_TEXT, t->container_text)
+                   : t->container_text,
+            solid ? t->primary : sel_border,
+            r4_disabled_fill(t, rest_fill),
+            r4_disabled_text(t, t->border)};
+        r4_color c[R4_PS_COUNT];
+        for (int s = 0; s < R4_PS_COUNT; ++s)
+            c[s] =
+                t->paint[e][s] != R4_ROLE_UNSET ? role_color(t, t->paint[e][s], rest_fill) : own[s];
+        /* The pointer is not to be heard (PointerHover=false): a hover border is the resting one.
+         */
+        c[R4_PS_HOVER_BORDER] = hov(t, c[R4_PS_HOVER_BORDER], c[R4_PS_REST_BORDER]);
+        char nm[48];
+        for (int s = 0; s < R4_PS_COUNT; ++s) {
+            (void)g_snprintf(nm, sizeof nm, "%s_%s", emph[e], slot[s]);
+            define(o, nm, c[s]);
+        }
+        /* An input rests on the base, not the raised button fill. */
+        if (e == R4_PE_OUTLINE) {
+            define(o,
+                   "outline_disabled_base",
+                   t->paint[e][R4_PS_DISABLED_FILL] != R4_ROLE_UNSET
+                       ? role_color(t, t->paint[e][R4_PS_DISABLED_FILL], t->base)
+                       : r4_disabled_fill(t, t->base));
+        }
+        /* A selected control under the pointer: the selected fill lifted (a solid one is not). */
+        (void)g_snprintf(nm, sizeof nm, "%s_select_hover", emph[e]);
+        define(o,
+               nm,
+               solid ? c[R4_PS_SELECT_FILL]
+                     : hov(t, r4_hover(t, c[R4_PS_SELECT_FILL]), c[R4_PS_SELECT_FILL]));
+    }
+}
+
 static void colors(GString *o, const r4_theme *t)
 {
     r4_color neg_text = r4_readable_on(t->negative, t->window, t->text);
@@ -43,9 +183,9 @@ static void colors(GString *o, const r4_theme *t)
     define(o, "window", t->window);
     define(o, "text", t->text);
     define(o, "base", t->base);
-    define(o, "base_hover", r4_hover(t, t->base));
+    define(o, "base_hover", hov(t, pick(t, R4_CTL_HOVER_SURFACE, r4_hover(t, t->base)), t->base));
     define(o, "button", t->button);
-    define(o, "button_hover", r4_hover(t, t->button));
+    define(o, "button_hover", hov(t, r4_hover(t, t->button), t->button));
     define(o, "accent", t->accent);
     define(o, "visited", pick(t, R4_CTL_VISITED, r4_mix(t->accent, t->muted, 0.5)));
     define(o, "border", t->border);
@@ -53,31 +193,37 @@ static void colors(GString *o, const r4_theme *t)
     define(o, "muted", t->muted);
     define(o, "tab_text", pick(t, R4_CTL_TAB_TEXT, t->text));
     define(o, "container", t->container);
-    define(o, "container_hover", r4_hover(t, t->container));
     define(o, "container_text", t->container_text);
     define(o, "primary", t->primary);
-    define(o, "primary_hover", r4_hover(t, t->primary));
-    define(o, "primary_pressed", r4_pressed(t, t->primary));
+    define(o,
+           "primary_hover",
+           hov(t, pick(t, R4_CTL_PRIMARY_HOVER, r4_hover(t, t->primary)), t->primary));
+    define(o, "primary_pressed", pick(t, R4_CTL_PRIMARY_PRESSED, r4_pressed(t, t->primary)));
     define(o, "primary_text", t->primary_text);
     define(o, "positive", t->positive);
     define(o, "warning", t->warning);
     define(o, "warning_text", warn_text);
     define(o, "negative", t->negative);
-    define(o, "negative_hover", r4_hover(t, t->negative));
+    define(o, "negative_hover", hov(t, r4_hover(t, t->negative), t->negative));
     define(o, "negative_text", neg_text);
-    define(o, "disabled_text", r4_disabled_text(t, t->text));
+    define(o, "disabled_text", pick(t, R4_CTL_DISABLED_TEXT, r4_disabled_text(t, t->text)));
     define(o, "disabled_fill", r4_disabled_fill(t, t->button));
     define(o, "disabled_base", r4_disabled_fill(t, t->base));
-    /* The enabled boundary dimmed like disabled text, so a disabled control keeps an outline (not
-     * one equal to its fill). */
+    /* The enabled boundary dimmed like disabled text, so a disabled control keeps an outline (one
+     * equal to its fill would vanish). The check, radio and switch parts use it as it is. */
     define(o, "disabled_border", r4_disabled_text(t, t->border));
-    define(o, "disabled_primary", r4_disabled_fill(t, t->primary));
     define(o, "track", pick(t, R4_CTL_TRACK, r4_mix(t->window, t->text, 0.14)));
     define(o, "thumb", pick(t, R4_CTL_THUMB, r4_mix(t->window, t->text, 0.35)));
-    define(o, "thumb_hover", pick(t, R4_CTL_THUMB_HOVER, r4_mix(t->window, t->text, 0.5)));
+    define(o,
+           "thumb_hover",
+           hov(t,
+               pick(t, R4_CTL_THUMB_HOVER, r4_mix(t->window, t->text, 0.5)),
+               pick(t, R4_CTL_THUMB, r4_mix(t->window, t->text, 0.35))));
     define(o,
            "track_hover",
-           pick(t, R4_CTL_TRACK_HOVER, pick(t, R4_CTL_TRACK, r4_mix(t->window, t->text, 0.14))));
+           hov(t,
+               pick(t, R4_CTL_TRACK_HOVER, pick(t, R4_CTL_TRACK, r4_mix(t->window, t->text, 0.14))),
+               pick(t, R4_CTL_TRACK, r4_mix(t->window, t->text, 0.14))));
     define(o, "surface_variant", t->surface_variant);
     define(o, "scrim", t->scrim);
     define(o, "selection", pick(t, R4_CTL_SELECTION, t->container));
@@ -98,18 +244,11 @@ static void colors(GString *o, const r4_theme *t)
     define(o,
            "border_resting_link",
            pick(t, R4_CTL_BORDER_RESTING_LINK, ricecol_from_rgba16(0, 0, 0, 0)));
-    /* A hovered boundary, the boundary of a selected control, the pressed fills. */
-    define(o, "border_hover", r4_mix(t->border, t->text, 2 * t->knobs.hover_layer));
-    define(o, "selection_border", t->knobs.selection_boundary ? t->primary : t->border);
-    define(o, "button_pressed", r4_pressed(t, t->button));
-    define(o, "container_pressed", r4_pressed(t, t->container));
-    define(o, "base_pressed", r4_pressed(t, t->base));
     /* Raised surface (palette `elevated` is the button fill), the info status, tonal status fills.
      */
     define(o, "elevated", t->button);
-    define(o, "elevated_hover", r4_hover(t, t->button));
-    define(o, "window_hover", r4_hover(t, t->window));
-    define(o, "selection_hover", r4_hover(t, pick(t, R4_CTL_SELECTION, t->container)));
+    define(o, "elevated_hover", hov(t, r4_hover(t, t->button), t->button));
+    define(o, "window_hover", hov(t, r4_hover(t, t->window), t->window));
     define(o, "info", t->accent);
     define(o, "info_text", r4_readable_on(t->accent, t->window, t->text));
     define(o, "positive_text", r4_readable_on(t->positive, t->window, t->text));
@@ -131,6 +270,7 @@ static void colors(GString *o, const r4_theme *t)
         }
     }
     define(o, "thumb_active", pick(t, R4_CTL_THUMB_ACTIVE, r4_mix(t->window, t->text, 0.65)));
+    paint_colors(o, t);
 }
 
 /* Value of a {TOKEN}; NULL when unknown. Returned string is owned by the caller. */
@@ -228,6 +368,10 @@ static char *token(const r4_theme *t, const char *name)
                                                            : -s->focus_width;
         return g_strdup_printf("%d", off);
     }
+    /* The pseudo-class that shows the ring: keyboard focus only, or any focus ([Focus] Visible).
+     * Text inputs show theirs on any focus in GTK 4 already, so they keep :focus-visible. */
+    if (!strcmp(name, "FV"))
+        return g_strdup(t->knobs.focus_always ? "focus" : "focus-visible");
     /* Colour-only transitions, none when motion is off or the duration is zero (reduced motion). */
     if (!strcmp(name, "TRANSITION")) {
         if (!t->knobs.motion || t->knobs.motion_ms <= 0)

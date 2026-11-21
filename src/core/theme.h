@@ -25,8 +25,62 @@ typedef enum {
     R4_CTL_BORDER_SUBTLE,
     R4_CTL_BORDER_RULE,
     R4_CTL_BORDER_RESTING_LINK,
+    /* The shell's own state colours; each replaces the engine's derivation of the same name. */
+    R4_CTL_HOVER_SURFACE,
+    R4_CTL_PRESSED_SURFACE,
+    R4_CTL_CONTAINER_HOVER,
+    R4_CTL_CONTAINER_PRESSED,
+    R4_CTL_PRIMARY_HOVER,
+    R4_CTL_PRIMARY_PRESSED,
+    R4_CTL_DISABLED_TEXT,
     R4_CTL_COUNT
 } r4_ctl;
+
+/* What the producer's behaviour profile paints, per emphasis and state ([Control.outline],
+ * [Control.flat], [Control.solid] of the palette file). The file names a role; the engine gives the
+ * colour, so its own overrides and the contrast guard still apply. */
+typedef enum { R4_PE_OUTLINE, R4_PE_FLAT, R4_PE_SOLID, R4_PE_COUNT } r4_paint_emph;
+typedef enum {
+    R4_PS_REST_BORDER,
+    R4_PS_HOVER_BORDER,
+    R4_PS_PRESSED_FILL,
+    R4_PS_PRESSED_BORDER,
+    R4_PS_SELECT_FILL,
+    R4_PS_SELECT_TEXT,
+    R4_PS_SELECT_BORDER,
+    R4_PS_DISABLED_FILL,
+    R4_PS_DISABLED_BORDER,
+    R4_PS_COUNT
+} r4_paint_slot;
+typedef enum {
+    R4_ROLE_UNSET, /* the slot was not given: the engine's own look */
+    R4_ROLE_NONE,
+    R4_ROLE_SURFACE,
+    R4_ROLE_HOVER_SURFACE,
+    R4_ROLE_FOCUS_SURFACE,
+    R4_ROLE_PRESSED_SURFACE,
+    R4_ROLE_CONTAINER,
+    R4_ROLE_CONTAINER_HOVER,
+    R4_ROLE_CONTAINER_PRESSED,
+    R4_ROLE_CURRENT_CONTAINER,
+    R4_ROLE_DISABLED_SURFACE,
+    R4_ROLE_PRIMARY,
+    R4_ROLE_PRIMARY_HOVER,
+    R4_ROLE_PRIMARY_FOCUS,
+    R4_ROLE_PRIMARY_PRESSED,
+    R4_ROLE_TEXT,
+    R4_ROLE_MUTED,
+    R4_ROLE_CONTAINER_TEXT,
+    R4_ROLE_CURRENT_TEXT,
+    R4_ROLE_DISABLED_TEXT,
+    R4_ROLE_PRIMARY_TEXT,
+    R4_ROLE_OUTLINE,
+    R4_ROLE_FOCUS,
+    R4_ROLE_HOVER,
+    R4_ROLE_CURRENT,
+    R4_ROLE_DISABLED_BORDER,
+    R4_ROLE_COUNT
+} r4_role;
 
 /* Config-driven behaviour of the states (sections [State] [Contrast] [Focus] [Selection]
  * [Motion] of gtk4.conf). Every field has a range check. */
@@ -46,6 +100,10 @@ typedef struct {
     gboolean motion;             /* colour-only state transitions */
     int motion_ms;               /* 0..1000 */
     double status_tint;          /* status colour weight over the base in an infobar fill, 0..1 */
+    /* FALSE: a hovered control looks like a resting one (keyboard-first) */
+    gboolean pointer_hover;
+    /* the ring shows on a pointer-focused control too, not only by keyboard */
+    gboolean focus_always;
 } r4_knobs;
 
 /* [Emphasis]: how a family of controls rests. DEFAULT leaves the template's choice. */
@@ -77,6 +135,7 @@ typedef struct {
     r4_color surface_variant, scrim;
     r4_color ctl[R4_CTL_COUNT];
     guint32 ctl_set; /* bit i: ctl[i] was given */
+    r4_role paint[R4_PE_COUNT][R4_PS_COUNT];
     r4_shape shape;
     r4_knobs knobs;
     GPtrArray *corrections; /* roles the contrast guard raised or found failing */

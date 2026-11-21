@@ -119,6 +119,32 @@ focus, accent or primary colour that misses its floor and prints each correction
 (`rice-gtk4-css` stderr); `Enforce=false` only reports. `[Motion]` turns the colour-only
 transitions off (`Enabled=false`) or sets their length (`Duration`, ms; 0 means none).
 
+The palette file can carry these sections too (the shell's bridge writes `[State]`, `[Contrast]` and
+`[Motion]` there from its control tuning); `gtk4.conf` wins key by key. `[State] PointerHover=false`
+makes every hover colour equal the resting one (a keyboard-first look); the `:hover` rules stay.
+
+The palette's `[Control]` section may also carry the producer's own state colours, which replace the
+engine's derivation of the same name: `hoverSurface` (`base_hover`), `pressedSurface`
+(`base_pressed`), `containerHover`, `containerPressed`, `primaryHover`, `primaryPressed` and
+`disabledText`. A `[Colors]` override of `Base`, `Border`, `Container` or `Primary`, a contrast-guard
+change of one of them, or `[Selection] Mode=solid` makes the producer's states for it stale, so the
+engine derives them again. Buttons rest on `elevated`, which the producer has no role for: they take the
+amounts (`HoverLayer`, `PressedLayer`), not the producer's colours.
+
+What each kind of control paints per state comes as role names, one section per emphasis
+(`[Control.outline]` buttons and inputs, `[Control.flat]` rows, menu items, tabs, the sidebar and the
+calendar, `[Control.solid]` the suggested action). Each takes the slots `restBorder`, `hoverBorder`,
+`pressedFill`, `pressedBorder`, `selectFill`, `selectText`, `selectBorder`, `disabledFill` and
+`disabledBorder`, and a value is a role name (`none`, `surface`, `container`, `containerPressed`,
+`outline`, `primary`, `primaryPressed`, `disabledBorder`, ...; an unknown name is reported). The engine
+resolves the name to its own colour, so a `[Colors]` override and the contrast guard still apply. The
+template reads the result as `@outline_*`, `@flat_*` and `@solid_*` colours and draws its state rules
+in the precedence disabled, pressed, selected, hover; a boundary the profile turns off is transparent,
+so a box never changes size. A slot the producer leaves out keeps the engine's own look.
+`[Focus] Visible=always` shows the focus ring on a pointer-focused control too (text inputs already do).
+Not driven by the producer: the hover fill and text, the focus fill, the current-item marker and the
+pressed text; the engine keeps its own amounts for those.
+
 `[State] StatusTint` sets how much of the status colour an infobar fill takes over the base;
 the text on it is chosen readable on that fill.
 

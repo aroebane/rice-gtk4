@@ -124,6 +124,8 @@ static const char *const k_keys[] = {"Source:Path",
                                      "Motion:Enabled",
                                      "Motion:Duration",
                                      "State:StatusTint",
+                                     "State:PointerHover",
+                                     "Focus:Visible",
                                      NULL};
 
 static gboolean known(const char *section, const char *key)
@@ -185,8 +187,21 @@ static void defaults(r4_theme *t)
     t->surface_variant = rgb(0x45475a);
     t->scrim = rgb(0x000000);
     t->shape = (r4_shape){0, FALSE, 1, 2, 1, 8, 8, 28, 12, 16};
-    t->knobs = (r4_knobs){
-        0.08, 0.14, 0.38, 0.12, 4.5, 3.0, TRUE, R4_FOCUS_INSET, FALSE, TRUE, TRUE, 80, 0.16};
+    t->knobs = (r4_knobs){0.08,
+                          0.14,
+                          0.38,
+                          0.12,
+                          4.5,
+                          3.0,
+                          TRUE,
+                          R4_FOCUS_INSET,
+                          FALSE,
+                          TRUE,
+                          TRUE,
+                          80,
+                          0.16,
+                          TRUE,
+                          FALSE};
     t->dark = TRUE;
 }
 
@@ -204,13 +219,87 @@ static const char *const k_ctl_names[R4_CTL_COUNT] = {"selection",
                                                       "disabledStrong",
                                                       "borderSubtle",
                                                       "borderRule",
-                                                      "borderRestingLink"};
+                                                      "borderRestingLink",
+                                                      "hoverSurface",
+                                                      "pressedSurface",
+                                                      "containerHover",
+                                                      "containerPressed",
+                                                      "primaryHover",
+                                                      "primaryPressed",
+                                                      "disabledText"};
+
+/* The palette file's [Control.<emphasis>] sections, their keys and the role names they may hold, in
+ * r4_paint_emph, r4_paint_slot and r4_role order. */
+static const char *const k_paint_sections[R4_PE_COUNT] = {
+    "Control.outline", "Control.flat", "Control.solid"};
+static const char *const k_paint_keys[R4_PS_COUNT] = {"restBorder",
+                                                      "hoverBorder",
+                                                      "pressedFill",
+                                                      "pressedBorder",
+                                                      "selectFill",
+                                                      "selectText",
+                                                      "selectBorder",
+                                                      "disabledFill",
+                                                      "disabledBorder"};
+static const char *const k_role_names[R4_ROLE_COUNT] = {NULL,
+                                                        "none",
+                                                        "surface",
+                                                        "hoverSurface",
+                                                        "focusSurface",
+                                                        "pressedSurface",
+                                                        "container",
+                                                        "containerHover",
+                                                        "containerPressed",
+                                                        "currentContainer",
+                                                        "disabledSurface",
+                                                        "primary",
+                                                        "primaryHover",
+                                                        "primaryFocus",
+                                                        "primaryPressed",
+                                                        "text",
+                                                        "muted",
+                                                        "containerText",
+                                                        "currentText",
+                                                        "disabledText",
+                                                        "primaryText",
+                                                        "outline",
+                                                        "focus",
+                                                        "hover",
+                                                        "current",
+                                                        "disabledBorder"};
+
+/* What the producer says one emphasis paints in one state: a role name, resolved by css.c. */
+static void read_paint(r4_theme *t, const riceini_t *pal)
+{
+    for (int e = 0; e < R4_PE_COUNT; ++e)
+        for (int s = 0; s < R4_PS_COUNT; ++s) {
+            const char *v = riceini_get(pal, k_paint_sections[e], k_paint_keys[s]);
+            if (!v || !*v)
+                continue;
+            for (int r = R4_ROLE_NONE; r < R4_ROLE_COUNT; ++r)
+                if (!strcmp(v, k_role_names[r]))
+                    t->paint[e][s] = (r4_role)r;
+            if (t->paint[e][s] == R4_ROLE_UNSET)
+                problem(t, k_paint_sections[e], k_paint_keys[s], "unknown role name");
+        }
+}
 
 static void set_ctl(r4_theme *t, r4_ctl i, r4_color v)
 {
     t->ctl[i] = v;
     t->ctl_set |= 1U << (unsigned)i;
 }
+
+/* A colour the config or the contrast guard changed after the producer computed its state colours
+ * from the old one: the producer's states no longer fit it, so the engine derives them again. */
+static void drop_ctl(r4_theme *t, unsigned mask)
+{
+    t->ctl_set &= ~mask;
+}
+#define R4_BIT(i) (1U << (unsigned)(i))
+#define R4_PRIMARY_STATES (R4_BIT(R4_CTL_PRIMARY_HOVER) | R4_BIT(R4_CTL_PRIMARY_PRESSED))
+#define R4_CONTAINER_STATES (R4_BIT(R4_CTL_CONTAINER_HOVER) | R4_BIT(R4_CTL_CONTAINER_PRESSED))
+#define R4_BASE_STATES (R4_BIT(R4_CTL_HOVER_SURFACE) | R4_BIT(R4_CTL_PRESSED_SURFACE))
 
 static void get_real(r4_theme *t,
                      const riceini_t *ini,
@@ -258,6 +347,7 @@ static void read_knobs(r4_theme *t, const riceini_t *cfg)
     get_bool(t, cfg, "Contrast", "Enforce", &k->enforce);
     get_bool(t, cfg, "Selection", "Boundary", &k->selection_boundary);
     get_bool(t, cfg, "Motion", "Enabled", &k->motion);
+    get_bool(t, cfg, "State", "PointerHover", &k->pointer_hover);
     const char *v = riceini_get(cfg, "Focus", "Mode");
     if (v && *v) {
         if (!strcmp(v, "inset"))
@@ -268,6 +358,15 @@ static void read_knobs(r4_theme *t, const riceini_t *cfg)
             k->focus_mode = R4_FOCUS_BORDER;
         else
             problem(t, "Focus", "Mode", "expected inset, outer or border");
+    }
+    v = riceini_get(cfg, "Focus", "Visible");
+    if (v && *v) {
+        if (!strcmp(v, "keyboard"))
+            k->focus_always = FALSE;
+        else if (!strcmp(v, "always"))
+            k->focus_always = TRUE;
+        else
+            problem(t, "Focus", "Visible", "expected keyboard or always");
     }
     v = riceini_get(cfg, "Selection", "Mode");
     if (v && *v) {
@@ -366,8 +465,10 @@ static void guard(r4_theme *t)
     t->accent = guard_role(t, "accent", t->accent, surf, 2, b, &changed);
     t->primary = guard_role(t, "primary", t->primary, surf, 2, b, &primary_changed);
     t->muted = guard_role(t, "muted", t->muted, surf, 2, x, &changed);
-    if (primary_changed)
+    if (primary_changed) {
         t->primary_text = r4_readable_on(t->primary, t->window, t->text);
+        drop_ctl(t, R4_PRIMARY_STATES);
+    }
     guard_status_tint(t);
 }
 
@@ -415,13 +516,16 @@ static void derive(r4_theme *t, const riceini_t *pal, const riceini_t *cfg)
     for (int i = 0; i < R4_CTL_COUNT; ++i)
         if (get_color(pal, "Control", k_ctl_names[i], &v))
             set_ctl(t, (r4_ctl)i, v);
+    read_paint(t, pal);
     /* [Colors] in the config overrides key by key. */
     if (get_color(cfg, "Colors", "Window", &v))
         t->window = v;
     if (get_color(cfg, "Colors", "Text", &v))
         t->text = v;
-    if (get_color(cfg, "Colors", "Base", &v))
+    if (get_color(cfg, "Colors", "Base", &v)) {
         t->base = v;
+        drop_ctl(t, R4_BASE_STATES);
+    }
     if (get_color(cfg, "Colors", "Button", &v))
         t->button = v;
     if (get_color(cfg, "Colors", "Accent", &v))
@@ -451,11 +555,14 @@ static void derive(r4_theme *t, const riceini_t *pal, const riceini_t *cfg)
     }
     if (get_color(pal, "Control", "primaryText", &v))
         t->primary_text = v;
-    if (get_color(cfg, "Colors", "Container", &v))
+    if (get_color(cfg, "Colors", "Container", &v)) {
         t->container = v;
+        drop_ctl(t, R4_CONTAINER_STATES);
+    }
     if (get_color(cfg, "Colors", "ContainerText", &v))
         t->container_text = v;
     if (get_color(cfg, "Colors", "Primary", &v)) {
+        drop_ctl(t, R4_PRIMARY_STATES);
         t->primary = v;
         t->primary_text = r4_readable_on(v, t->window, t->text);
     }
@@ -737,7 +844,8 @@ r4_theme *r4_theme_load(const char *path)
     riceini_t *pal = riceini_load(ppath);
     if (!pal)
         pal = riceini_parse("", 0);
-    read_knobs(t, cfg);
+    read_knobs(t, pal); /* the producer's amounts (the shell's tuning) ... */
+    read_knobs(t, cfg); /* ... and gtk4.conf wins, as with the colours */
     read_overrides(t, cfg);
     derive(t, pal, cfg);
     guard(t);
@@ -745,6 +853,7 @@ r4_theme *r4_theme_load(const char *path)
     if (t->knobs.selection_solid && !((t->ctl_set >> (unsigned)R4_CTL_SELECTION) & 1U)) {
         t->container = t->primary;
         t->container_text = t->primary_text;
+        drop_ctl(t, R4_CONTAINER_STATES);
     }
 
     get_int(t, cfg, "BorderWidth", &t->shape.border_width, 0, 8);

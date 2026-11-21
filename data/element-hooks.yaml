@@ -71,7 +71,7 @@
 - id: fontbutton
   hooks: ["fontbutton", "fontbutton > button"]
 - id: scalebutton
-  hooks: ["scalebutton", "scalebutton.scale"]
+  hooks: ["scalebutton", "scalebutton > button"]
 - id: menubutton
   hooks: ["menubutton", "menubutton arrow", "menubutton arrow.down", "menubutton arrow.up"]
 - id: menubutton-arrow

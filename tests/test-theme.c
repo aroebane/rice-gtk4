@@ -166,7 +166,8 @@ static void test_old_rules_gone(void)
     for (int i = 0; gone[i]; ++i)
         if (strstr(css, gone[i]))
             g_error("old rule is back: %s", gone[i]);
-    g_assert_nonnull(strstr(css, "notebook > header tab:checked { background-color: @selection;"));
+    g_assert_nonnull(
+        strstr(css, "notebook > header tab:checked { background-color: @flat_select_fill;"));
     g_free(css);
     r4_theme_free(t);
 }
@@ -255,6 +256,125 @@ static void test_override_guard(void)
     r4_theme_free(t);
 }
 
+/* The producer's palette file carries the shell's own state colours and amounts: they replace the
+ * engine's derivation, and gtk4.conf still wins over them. */
+static r4_theme *load_pair(const char *conf, const char *palette)
+{
+    char *ppath = g_build_filename(g_get_tmp_dir(), "rice-gtk4-test-palette.ini", NULL);
+    char *full = g_strdup_printf("[Source]\nPath=%s\n%s", ppath, conf);
+    g_assert_true(g_file_set_contents(ppath, palette, -1, NULL));
+    r4_theme *t = load_text(full);
+    g_remove(ppath);
+    g_free(full);
+    g_free(ppath);
+    return t;
+}
+
+static const char *const k_states =
+    "[Palette]\nbackground=#101010\nsurface=#202020\ntext=#e0e0e0\naccent=#80c0ff\n"
+    "[State]\nHoverLayer=0.2\n"
+    "[Control]\nprimary=#80c0ff\nprimaryHover=#123456\n"
+    "primaryPressed=#654321\nhoverSurface=#345678\ndisabledText=#555555\n";
+
+static void test_shell_states(void)
+{
+    r4_theme *t = load_pair("", k_states);
+    g_assert_cmpfloat(t->knobs.hover_layer, ==, 0.2);
+    char *css = render(t);
+    g_assert_nonnull(strstr(css, "@define-color primary_hover #123456"));
+    g_assert_nonnull(strstr(css, "@define-color base_hover #345678"));
+    g_assert_nonnull(strstr(css, "@define-color disabled_text #555555"));
+    g_free(css);
+    r4_theme_free(t);
+}
+
+static void test_shell_states_yield(void)
+{
+    /* gtk4.conf wins over the palette's amount, and a config colour makes the producer's states for
+     * that colour stale: the engine derives them again. */
+    r4_theme *t = load_pair("[State]\nHoverLayer=0.1\n[Colors]\nPrimary=#ff0000\n", k_states);
+    g_assert_cmpfloat(t->knobs.hover_layer, ==, 0.1);
+    char *css = render(t);
+    g_assert_null(strstr(css, "@define-color primary_hover #123456"));
+    g_assert_nonnull(strstr(css, "@define-color base_hover #345678"));
+    g_free(css);
+    r4_theme_free(t);
+}
+
+static void test_pointer_hover_off(void)
+{
+    r4_theme *t = load_pair("[State]\nPointerHover=false\n", k_states);
+    g_assert_cmpuint(t->problems->len, ==, 0);
+    char *css = render(t);
+    g_assert_nonnull(strstr(css, "@define-color primary_hover #80c0ff"));
+    g_assert_nonnull(strstr(css, "@define-color base_hover #202020"));
+    g_free(css);
+    r4_theme_free(t);
+}
+
+/* What each emphasis paints per state arrives as role names; the engine resolves them against its
+ * own colours. */
+static const char *const k_paint = "[Control.outline]\nrestBorder=none\nhoverBorder="
+                                   "outline\nselectFill=container\nselectBorder=outline\n"
+                                   "disabledBorder=disabledBorder\n"
+                                   "[Control.flat]\nselectFill=primaryPressed\nselectBorder=none\n";
+
+static void test_paint_table(void)
+{
+    r4_theme *t = load_pair("", g_strconcat(k_states, k_paint, NULL));
+    g_assert_cmpuint(t->problems->len, ==, 0);
+    char *css = render(t);
+    /* "none" is a transparent boundary; "outline" is the engine's own boundary colour. */
+    g_assert_nonnull(strstr(css, "@define-color outline_rest_border rgba(0, 0, 0, 0.000);"));
+    g_assert_nonnull(strstr(css, "@define-color flat_select_border rgba(0, 0, 0, 0.000);"));
+    g_assert_nonnull(strstr(css, "@define-color outline_hover_border #"));
+    g_assert_nonnull(strstr(css, "@define-color flat_select_fill #654321;"));
+    /* A slot the producer did not name keeps the engine's own look. */
+    g_assert_nonnull(strstr(css, "@define-color solid_pressed_fill #654321;"));
+    g_free(css);
+    r4_theme_free(t);
+}
+
+static void test_paint_follows_overrides(void)
+{
+    /* A role name resolves to the engine's colour, so a [Colors] override and the guard carry
+     * through. */
+    r4_theme *t = load_pair("[Colors]\nPrimary=#ff0000\n", g_strconcat(k_states, k_paint, NULL));
+    char *css = render(t);
+    g_assert_null(strstr(css, "@define-color flat_select_fill #654321;"));
+    g_assert_nonnull(strstr(css, "@define-color flat_select_fill #"));
+    g_free(css);
+    r4_theme_free(t);
+}
+
+static void test_paint_unknown_name(void)
+{
+    r4_theme *t =
+        load_pair("", g_strconcat(k_states, "[Control.flat]\nselectFill=sparkle\n", NULL));
+    g_assert_cmpuint(t->problems->len, ==, 1);
+    r4_theme_free(t);
+}
+
+static void test_focus_visible(void)
+{
+    r4_theme *t = load_pair("", g_strconcat(k_states, "[Focus]\nVisible=always\n", NULL));
+    g_assert_cmpuint(t->problems->len, ==, 0);
+    g_assert_true(t->knobs.focus_always);
+    char *css = render(t);
+    g_assert_nonnull(strstr(css, "\nbutton:focus, entry:focus-visible"));
+    g_assert_null(strstr(css, "\nbutton:focus-visible, entry:focus-visible"));
+    g_free(css);
+    r4_theme_free(t);
+    t = load_pair("", k_states);
+    css = render(t);
+    g_assert_nonnull(strstr(css, "\nbutton:focus-visible, entry:focus-visible"));
+    g_free(css);
+    r4_theme_free(t);
+    t = load_pair("", g_strconcat(k_states, "[Focus]\nVisible=sometimes\n", NULL));
+    g_assert_cmpuint(t->problems->len, ==, 1);
+    r4_theme_free(t);
+}
+
 int main(int argc, char **argv)
 {
     g_test_init(&argc, &argv, NULL);
@@ -273,5 +393,12 @@ int main(int argc, char **argv)
     g_test_add_func("/override/rejects", test_element_rejects);
     g_test_add_func("/guard/status-tint", test_tint_guard);
     g_test_add_func("/guard/overrides", test_override_guard);
+    g_test_add_func("/state/shell", test_shell_states);
+    g_test_add_func("/state/shell-yields", test_shell_states_yield);
+    g_test_add_func("/state/pointer-hover-off", test_pointer_hover_off);
+    g_test_add_func("/paint/table", test_paint_table);
+    g_test_add_func("/paint/follows-overrides", test_paint_follows_overrides);
+    g_test_add_func("/paint/unknown-name", test_paint_unknown_name);
+    g_test_add_func("/focus/visible", test_focus_visible);
     return g_test_run();
 }
