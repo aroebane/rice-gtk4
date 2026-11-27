@@ -117,6 +117,29 @@ static void test_clamps_and_unknown(void)
     r4_theme_free(t);
 }
 
+/* A switch is a family of its own: the design's [Shape.switch] squares its track and knob, and a
+ * design without that block keeps the library's pill (half the track height). */
+static void test_switch_follows_design(void)
+{
+    put("pill.ini", "[Design]\nSchema=1\n");
+    put("square.ini", "[Design]\nSchema=1\n[Shape.switch]\nRadius=0px\n");
+    r4_geometry g;
+    double w, h;
+    r4_theme *t = load("[Design]\nName=pill\n");
+    r4_family_box(&t->shape, R4_FAM_SWITCH, &w, &h);
+    r4_design_geometry(&t->design, &t->shape, R4_FAM_SWITCH, w, h, &g, &t->diag);
+    g_assert_cmpfloat(g.radius[0], ==, h / 2);
+    r4_theme_free(t);
+    t = load("[Design]\nName=square\n");
+    r4_family_box(&t->shape, R4_FAM_SWITCH, &w, &h);
+    r4_design_geometry(&t->design, &t->shape, R4_FAM_SWITCH, w, h, &g, &t->diag);
+    g_assert_cmpfloat(g.radius[0], ==, 0);
+    char *c = css_of(t);
+    g_assert_nonnull(strstr(c, "solid @track; border-radius: 0px; color: @text;"));
+    g_free(c);
+    r4_theme_free(t);
+}
+
 static void test_fidelity_and_golden(void)
 {
     put("ind.ini",
@@ -171,6 +194,7 @@ int main(int argc, char **argv)
     g_test_add_func("/design/integer-only-toolkit", test_integer_only_toolkit);
     g_test_add_func("/design/cycle-and-missing", test_cycle_and_missing);
     g_test_add_func("/design/clamps-and-unknown", test_clamps_and_unknown);
+    g_test_add_func("/design/switch-follows-design", test_switch_follows_design);
     g_test_add_func("/design/fidelity-and-golden", test_fidelity_and_golden);
     int r = g_test_run();
     g_rmdir(tmp); /* leftover files are in the system temp dir; the test never writes elsewhere */
